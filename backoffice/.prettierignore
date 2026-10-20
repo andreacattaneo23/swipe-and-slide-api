@@ -1,0 +1,11 @@
+.next
+node_modules
+src/texts/source
+src/design/source
+src/design/fonts
+public
+package-lock.json
+next-env.d.ts
+src/texts/it.ts
+src/design/tokens.css
+src/app/icon.svg

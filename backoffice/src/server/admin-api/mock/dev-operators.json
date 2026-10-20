@@ -1,0 +1,24 @@
+{
+  "_note": "Operatori finti dell'adattatore mock, solo per lo sviluppo locale. Il segreto TOTP è pubblico per costruzione: non usarlo mai fuori dai dati finti.",
+  "totpSecret": "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP",
+  "operators": [
+    {
+      "id": "op-admin",
+      "name": "Operatore Amministratore",
+      "email": "admin@swipeandslide.example",
+      "roles": ["admin"]
+    },
+    {
+      "id": "op-moderator",
+      "name": "Operatore Moderatore",
+      "email": "moderatore@swipeandslide.example",
+      "roles": ["moderator"]
+    },
+    {
+      "id": "op-support",
+      "name": "Operatore Supporto",
+      "email": "supporto@swipeandslide.example",
+      "roles": ["support"]
+    }
+  ]
+}

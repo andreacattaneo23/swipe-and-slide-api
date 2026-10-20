@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Swipe &amp; Slide">
+<title>Swipe &amp; Slide</title>
+<rect width="64" height="64" rx="14.4" fill="#3A2436"/>
+<g transform="translate(8.08 12.5) scale(0.4052)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+  <clipPath id="ss-favicon"><path clip-rule="evenodd" d="M-20 -20H140V124H-20ZM24 26.5H86A15.5 15.5 0 0 1 101.5 42V80A15.5 15.5 0 0 1 86 95.5H24A15.5 15.5 0 0 1 8.5 80V42A15.5 15.5 0 0 1 24 26.5Z"/></clipPath>
+  <g clip-path="url(#ss-favicon)"><rect x="24" y="8" width="80" height="58" rx="12" transform="rotate(-8 64 37)" stroke="#E3B5A8" stroke-width="7"/></g>
+  <rect x="12" y="30" width="86" height="62" rx="12" stroke="#F7F1E8" stroke-width="7"/>
+  <path d="M28 76l16-14 13 8 22-20" stroke="#F7F1E8" stroke-width="7"/>
+</g>
+</svg>

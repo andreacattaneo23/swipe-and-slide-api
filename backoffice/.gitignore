@@ -1,0 +1,11 @@
+# Regole del solo backoffice, ancorate a questa cartella con "/".
+
+# Next.js
+/.next/
+/out/
+/next-env.d.ts
+
+# Test
+/coverage/
+/playwright-report/
+/test-results/

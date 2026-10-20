@@ -1,0 +1,81 @@
+# Controlli del backend su ogni PR verso main e su ogni push su main (D231): lint con i confini
+# tra app e admin, formato, tipi, build, test di unità, suite della regola core e integrazione
+# su PostgreSQL reale, contratti OpenAPI aggiornati e npm audit. PostgreSQL è un servizio di
+# GitHub Actions (in locale niente Docker, D237). Nessun segreto necessario.
+name: Verifica
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lint, tipi, test e suite RC
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: swipe_slide_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://postgres@localhost:5432/swipe_slide_test
+    steps:
+      - name: Scarica il codice
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Prepara Node dalla versione di .nvmrc
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Installa le dipendenze
+        run: npm ci
+
+      - name: Lint (con i confini tra app e admin)
+        run: npm run lint
+
+      - name: Controlla il formato
+        run: npm run format:check
+
+      - name: Controlla i tipi
+        run: npm run typecheck
+
+      - name: Compila
+        run: npm run build
+
+      - name: Test di unità
+        run: npm test
+
+      - name: Suite della regola core (RC)
+        run: npm run test:core-rule
+
+      - name: Test di integrazione
+        run: npm run test:integration
+
+      - name: Contratti OpenAPI aggiornati
+        run: npm run openapi:check
+
+      - name: Dipendenze senza vulnerabilità alte
+        run: npm audit --audit-level=high

@@ -1,0 +1,43 @@
+# Controlla con commitlint il titolo della PR, che con lo squash diventa il commit su main (D201).
+# Nessun hook git: questo controllo e quello del git-master prima di ogni commit sono gli unici.
+name: Titolo della PR
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-title-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  commitlint:
+    name: Conventional Commits sul titolo
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Scarica il codice
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Prepara Node dalla versione di .nvmrc
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # Senza gli script di installazione: qui serve solo commitlint.
+      - name: Installa le dipendenze
+        run: npm ci --ignore-scripts
+
+      # Il titolo arriva da una variabile d'ambiente, mai scritto nello script: un titolo con
+      # comandi della shell resta solo testo.
+      - name: Controlla il titolo con commitlint
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: printf '%s\n' "$PR_TITLE" | npx --no -- commitlint --verbose

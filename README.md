@@ -106,34 +106,34 @@ alcuna rotta `/backoffice/*`.
 ```
 swipe-and-slide-backend/
 ├── src/
-│   ├── core/            regola core: CoreRuleModule (canSee, canInteract, canWrite, setOpenSpace,
-│   │                    realign), VisibilityGuard, @ExposesUser, @CurrentUser
-│   ├── domain/          servizi di dominio senza controller, usati da app e admin
-│   │                    (companies, work-identity, excluded-companies, approvals, moderation, …)
-│   ├── app/             moduli e controller dell'API dell'app: auth (anche Apple e Google),
-│   │                    registration, consents, open-space, users, profiles, taxonomies, cities,
-│   │                    trips, feed, swipes, matches, chat, invites, agenda, offsites, blocks,
-│   │                    reports, notifications
-│   ├── admin/           API di amministrazione: auth degli operatori, companies, users,
-│   │                    moderation, approvals, chat-read, audit, stats, config, offsites,
-│   │                    store-review, operators
-│   ├── realtime/        gateway WebSocket, sottoscrizione Redis, canali personali
-│   ├── jobs/            comandi dei processi giornalieri e orari
-│   ├── infra/           database (Drizzle, schema, migrazioni), redis, cache, kms
-│   │                    (EncryptionModule), storage (R2), email (Brevo), push (Expo), vision,
-│   │                    identity-providers (Apple, Google), audit, config, logging
-│   ├── main.ts          avvio HTTP/WebSocket secondo SERVICE_ROLE
-│   └── jobs.ts          avvio dei processi pianificati
+│   ├── core/            regola core: CoreRuleModule e CoreRuleService (canSee, canInteract,
+│   │                    canWrite, setOpenSpace, realign), VisibilityGuard, @ExposesUser,
+│   │                    @Scopes, @Public, @CurrentUser, salute
+│   ├── domain/          servizi di dominio senza controller, usati da app e admin: companies,
+│   │                    otp, approvals, offsites, regole degli indirizzi email
+│   ├── app/             API dell'app: auth (nonce, codice, Apple, Google, sessioni, identità
+│   │                    personali), registration, me, directory (comuni e aziende)
+│   ├── admin/           API di amministrazione: auth degli operatori (OTP e TOTP), companies,
+│   │                    approvals, offsites
+│   ├── realtime/        modulo radice di realtime (per ora solo la salute)
+│   ├── infra/           config, database (Drizzle, schema, migratore), crypto, email (log e
+│   │                    Brevo), identity-providers (Apple, Google), audit, cache (limiti), http
+│   ├── cli/             comandi: migrate, seed, openapi, totp (sviluppo)
+│   ├── bootstrap.ts     modulo radice secondo SERVICE_ROLE e misure HTTP comuni
+│   ├── main.ts          avvio HTTP secondo SERVICE_ROLE
+│   └── jobs.ts          avvio dei processi pianificati (comandi da fare)
 ├── db/migrations/       migrazioni SQL versionate (tabelle, funzioni, trigger, ruoli, viste)
 ├── openapi/             contratti generati: app.json e admin.json
 ├── test/
-│   ├── core-rule/       suite RC (RC-01 … RC-200), mai in regressione
-│   ├── integration/     test con PostgreSQL reale
-│   └── e2e/
+│   ├── core-rule/       suite RC su PostgreSQL reale, mai in regressione
+│   ├── integration/     API dell'app e di amministrazione con PostgreSQL reale e i ruoli
+│   └── support/         database di prova, dati di prova, fornitori d'identità di prova
 ├── backoffice/          applicazione Next.js (BFF), con il suo package.json e Dockerfile
-├── docker/              Dockerfile dell'API e docker-compose.yml per lo sviluppo locale
-└── .github/             workflow della CI, Dependabot, commitlint
+└── .github/             workflow della CI (check.yml, pr-title.yml), Dependabot
 ```
+
+Cartelle previste e non ancora create: `src/jobs/` (comandi dei processi), `test/e2e/` e
+`docker/` (Dockerfile dell'API per Cloud Run; in locale niente Docker, D237).
 
 Moduli principali (nomi del glossario): `AuthModule`, `RegistrationModule`, `ConsentsModule`,
 `WorkIdentityModule`, `ExcludedCompaniesModule`, `CompaniesModule`, `CoreRuleModule`,
@@ -163,7 +163,7 @@ Regole di dipendenza:
 | Framework | NestJS (moduli, guard, OpenAPI generato) | NestJS 11 | D4, D231 |
 | Database | PostgreSQL **senza PostGIS** (distanze con la formula dell'emisenoverso tra i centroidi dei comuni ISTAT); estensioni `btree_gist`, `unaccent` | PostgreSQL 17 | D115, D231; estensioni [Proposta] |
 | Hosting del database | Neon, regione UE (Francoforte), piano gratuito anche in beta | — | D207 |
-| ORM e migrazioni | Drizzle ORM e drizzle-kit; funzioni, trigger e ruoli in SQL nelle migrazioni | Ultima stabile | Stack confermato; uso dell'SQL [Proposta] |
+| ORM e migrazioni | Drizzle ORM per le query; migrazioni SQL scritte a mano (tabelle, funzioni, trigger, ruoli) con un migratore interno | Ultima stabile | Stack confermato; migrazioni SQL [Proposta] |
 | Contratto API | OpenAPI 3.1 generato da NestJS (`@nestjs/swagger`), client TypeScript generato per app e backoffice | — | Confermato; generatore del client [Proposta] |
 | Validazione | `class-validator` + `class-transformer` sui DTO | — | D231 |
 | Identità personale | "Continua con Apple", "Continua con Google", email personale con codice; verifica dei token d'identità con `jose` (JWKS) | — | D224; libreria [Proposta] |
@@ -177,7 +177,7 @@ Regole di dipendenza:
 | Notifiche push | `expo-server-sdk` → Expo Push → APNs e FCM | — | [Proposta] |
 | Secondo fattore operatori | TOTP (RFC 6238) con una libreria open source | — | D88; libreria [Proposta] |
 | Log e tracce | `pino` (`nestjs-pino`), OpenTelemetry | — | D231 |
-| Test | Jest, PostgreSQL reale in container (Testcontainers o servizio della CI) | — | Architettura |
+| Test | Jest con ts-jest e supertest, PostgreSQL reale (Homebrew in locale, servizio di GitHub Actions nella CI) | — | Architettura; niente Docker in locale (D237) |
 | Backoffice | Next.js + TypeScript, build `standalone`, componenti semplici, font e Lucide locali | Next.js 16 | D92, D116, D231 |
 | Packaging | Docker, Artifact Registry, Cloud Run nella stessa regione UE | — | Regione da definire al deploy |
 
@@ -195,8 +195,8 @@ attiva (D82).
 | Elemento | Regola | Stato |
 |----------|--------|-------|
 | Token d'identità di Apple e Google | L'app invia il token d'identità (JWT) ricevuto dal fornitore; il backend verifica la **firma** con le chiavi pubbliche **JWKS** del fornitore (cache delle chiavi con rinnovo al cambio di `kid`), **issuer** (`https://appleid.apple.com`; `https://accounts.google.com` o `accounts.google.com`), **audience** (bundle `it.swipeandslide.app` e Services ID di Apple per il flusso web su Android, D228; client id iOS, Android e web di Google), **scadenza** e `iat`, **nonce** ed `email_verified` | D224; dettagli [Proposta] |
-| Nonce | `POST /auth/nonce` emette un nonce casuale a uso singolo, valido 5 minuti; l'app passa al fornitore la sua impronta SHA-256 e al backend il valore originale; il backend lo confronta e lo consuma | [Proposta] |
-| Dati conservati dal fornitore | Solo **email verificata** e **identificativo del fornitore** (`sub`), con il nome del fornitore; mai nome, foto o altri dati del profilo, anche se il fornitore li invia | D224; tabella `auth_identities` (`provider`, `provider_subject`, `user_id`) [Proposta] |
+| Nonce | `POST /auth/nonce` emette un nonce casuale a uso singolo, valido 5 minuti (tabella `auth_nonces`, solo impronta); l'app passa al fornitore la sua impronta SHA-256 (Apple) o il valore (Google) e al backend il valore originale; il backend lo confronta e lo consuma | D236 |
+| Dati conservati dal fornitore | Solo **email verificata** e **identificativo del fornitore** (`sub`), con il nome del fornitore; mai nome, foto o altri dati del profilo, anche se il fornitore li invia | D224; tabella `personal_identities` (`provider`, `subject`, `user_id`, `email`, `email_hash`), D236 |
 | Email nascosta di Apple | Ammessa (`privaterelay.appleid.com`); le email all'indirizzo personale passano dal servizio di inoltro di Apple, con il dominio del progetto registrato presso Apple | D224; registrazione del dominio [Proposta] |
 | Regole sull'email personale | Rifiutata se ha il **dominio di un'azienda dell'elenco** o è **usa e getta**, anche se arriva da Apple o Google (per esempio un account Google Workspace aziendale); unica, assente dalle impronte bloccate (D75, D142) | D224 |
 | Notifiche server-to-server di Apple | `POST /webhooks/apple`: JWT firmato da Apple verificato con il JWKS; `consent-revoked` e `account-delete` chiudono le sessioni e scollegano l'identità, `email-disabled` ed `email-enabled` aggiornano lo stato di recapito dell'email personale | D224 ("se servono"); gestione [Proposta] |
@@ -225,21 +225,26 @@ o con l'azienda in rimozione [Proposta]):
 | `restore` | Account in sospeso (D19) | Collegamento di un'email aziendale, esportazione, cancellazione |
 | `limited` | Sanzione, ripensamento della cancellazione, terzo rifiuto, azienda in rimozione | Stato, motivazione, ricorso, esportazione, cancellazione o suo annullamento |
 
-**Registrazione: sette passi** (ordine di D224; rotte e dettagli [Proposta])
+**Registrazione: sette passi** (ordine di D224, rotte dell'architettura con D236)
 
 | Passo | Rotta | Cosa fa il backend |
 |-------|-------|--------------------|
-| 1. Identità personale | `POST /auth/apple`, `POST /auth/google` oppure `POST /auth/code` + `/auth/verify` con l'email personale | Verifica token o codice, regole sull'email personale e impronte bloccate; se l'identità non è collegata a un account crea `users` in stato `registering` e la riga di `auth_identities`, e restituisce una sessione `registration`; se è già collegata, è un accesso |
-| 2. Data di nascita e termini | `PUT /registration/basics` | Rifiuta meno di 18 anni (D76); accettazione dei termini e dichiarazione P7 in `consents` |
-| 3. Email aziendale e codice | `POST /registration/work-email`, `.../verify` | Normalizza l'email e cerca il dominio nell'elenco **prima** di qualsiasi invio; codice dal dominio neutro; risposta uguale per indirizzi già usati o bloccati; alla verifica scrive l'email aziendale attiva e l'azienda, nella stessa transazione |
+| 1. Identità personale | `POST /registration/apple`, `POST /registration/google` (token e nonce, oppure il `registrationTicket` di un accesso senza account), `POST /registration/personal-email` e `.../verify` | Dominio dell'elenco e usa e getta **prima** del codice; dopo la verifica impronte bloccate ed email già usata; crea `users` in stato `registering` **senza azienda** e la riga di `personal_identities`, con una sessione `registration`; un'identità già registrata entra nel suo account (`existingAccount`) |
+| 2. Data di nascita e termini | `PUT /registration/birth-date` | Rifiuta meno di 18 anni (D76) e in quel caso cancella subito account e identità; scrive la data con `set_registration_birth_date` e la riga `terms` di `consents` |
+| 3. Email aziendale e codice | `POST /registration/work-email`, `.../verify` | Normalizza l'email e cerca il dominio nell'elenco **prima** di qualsiasi invio; codice dal mittente neutro; dopo la verifica impronte bloccate ed email già usata; in un'unica transazione email aziendale attiva, azienda dell'account e dichiarazione P7 |
 | 4. Consenso | `PUT /registration/consent` | Consenso esplicito art. 9 con casella separata (D33) |
-| 5. Profilo | `PATCH /me/profile`, foto | Nome e dati del profilo, filtro delle parole, foto con controllo |
+| 5. Profilo | `PUT /registration/profile` | Nome, cognome facoltativo, genere, "chi ti interessa" (dopo il consenso) e città base; foto con `/me/photos` (da fare) |
 | 6. Open space | `PUT /registration/open-space` | Scelta obbligata dopo la guida, con `set_open_space` e origine `registration`; vale subito e fuori dal limite (D156, D166) |
 | 7. Privacy | `PUT /registration/privacy` | Aziende escluse facoltative, al massimo 15, scritte subito (D40) |
-| Fine | `POST /registration/complete` | Rifiuta se manca un passo obbligatorio; stato `pending_approval` con la revisione a 24 ore (D141); sessione `approval` |
+| Fine | `POST /registration/complete` | Rifiuta se manca un passo obbligatorio; stato `pending_approval` con la revisione a 24 ore (D141); nuovo token con ambito `approval` |
 
-**Accesso**: con Apple, con Google o con l'email personale e codice; con l'email aziendale e
-codice solo finché è attiva (D82, D224). Le registrazioni abbandonate si cancellano dopo 7 giorni
+`GET /registration` restituisce i passi fatti, il passo successivo e la scadenza dei 7 giorni;
+ogni passo si accetta solo dopo i passi obbligatori che lo precedono (`registration.stepOrder`).
+
+**Accesso**: con Apple o Google (`POST /auth/apple`, `/auth/google`: senza account la risposta
+è `noAccount` con un `registrationTicket` valido 10 minuti) o con il codice (`POST /auth/code` e
+`/auth/verify`) all'email personale o all'email aziendale attiva (D82, D224); rinnovo con
+`POST /auth/refresh`, uscita con `POST /auth/logout` (anche da tutti i dispositivi). Le registrazioni abbandonate si cancellano dopo 7 giorni
 (D82).
 
 ### 4.2 Operatori del backoffice
@@ -284,7 +289,7 @@ nessuno.
 | Ruoli del database (D231) | `backoffice_role` (solo viste dedicate, nessun permesso su `messages`, `excluded_companies`, `blocks`, `swipes`, `open_space_history`, `profiles.interested_in`, …); `app_role` per l'API pubblica (senza modifica di `birth_date` né scrittura diretta dell'Open space); `jobs_role`; `audit_cleanup_role`; `migrator` proprietario dello schema; `realtime` senza accesso al database |
 | Funzioni con i privilegi del proprietario | Operazioni che toccano tabelle protette (fusioni, rimozioni, decisioni di moderazione, `read_chat`, `correct_birth_date`) scrivono l'audit nella stessa transazione e restituiscono solo esiti o conteggi |
 | Row-level security | **Non prevista nell'MVP** (D231): la regola vive in funzioni e trigger, i permessi in ruoli e viste; l'RLS duplicherebbe la regola e complicherebbe il pooler |
-| Suite RC | Casi RC-01 … RC-200 su tutti gli strati, più il test di copertura delle rotte (RC-26, RC-116) |
+| Suite RC | Casi RC-01 … RC-210 su tutti gli strati, più il test di copertura delle rotte (RC-26, RC-116) |
 
 ### 4.4 Dati
 
@@ -406,7 +411,7 @@ istanza e il feed si calcola dal database.
 
 | Misura | Regola |
 |--------|--------|
-| Indici principali | Feed: `users (company_id, is_demo, status)`, `profiles (home_city_id)` e parziale sui profili completi fuori OOO, `trips (city_id, end_date)`, `swipes (to_user_id, type)`; match: unico parziale sui match attivi per coppia, parziale sui match senza messaggi per `created_at`; messaggi: `(match_id, created_at, id)`; OTP: impronta del destinatario e scopo; identità: unico su (`provider`, `provider_subject`); aziende escluse nei due sensi |
+| Indici principali | Feed: `users (company_id, is_demo, status)`, `profiles (home_city_id)` e parziale sui profili completi fuori OOO, `trips (city_id, end_date)`, `swipes (to_user_id, type)`; match: unico parziale sui match attivi per coppia, parziale sui match senza messaggi per `created_at`; messaggi: `(match_id, created_at, id)`; OTP: impronta del destinatario e scopo; identità: unico su (`provider`, `subject`); aziende escluse nei due sensi |
 | Connessioni | Pooler di Neon (PgBouncer, modalità transazione) per API e processi; connessione diretta solo per le migrazioni; pool piccolo per istanza (es. 5) |
 | Paginazione | A cursore (`created_at`, `id`) per messaggi, match, Agenda, coda di moderazione; nessun `OFFSET`. Il feed restituisce lotti di 20 in ordine casuale pesato, mai ricostruibile (D52) |
 | Niente N+1 | Una query per elenco, con join o `IN` sugli identificativi; DTO composti nel servizio; un test conta le query per rotta critica |
@@ -472,28 +477,46 @@ istanza e il feed si calcola dal database.
 
 ### Requisiti
 
-Node.js 24 LTS con npm, Docker e Docker Compose, Git; facoltativi `gcloud` e `gh` (D231).
+Node.js 24 LTS con npm, Git; in locale **niente Docker** (D237): PostgreSQL 17 e Redis installati
+con Homebrew (`brew services start postgresql@17 redis`); facoltativi `gcloud` e `gh` (D231).
 
-### Comandi previsti
+### Avvio in locale
 
-Gli script non esistono ancora: nomi previsti, in inglese come nel frontend (D231).
+```sh
+npm ci
+createdb -h /tmp swipe_slide_dev && createdb -h /tmp swipe_slide_test
+cp .env.example .env        # poi compila i segreti (almeno 32 caratteri ciascuno)
+npm run db:migrate          # migrazioni SQL
+npm run db:seed             # dati di fantasia: aziende, operatore (stampa il segreto TOTP), utenti
+npm run start:dev           # API dell'app su :3000 (SERVICE_ROLE=app)
+SERVICE_ROLE=admin npm run start   # API di amministrazione su :3001 (dopo una build)
+```
+
+In sviluppo le email non partono: con `EMAIL_TRANSPORT=log` il codice OTP si scrive nel log
+dell'API. Il codice TOTP corrente dell'operatore del seed si ottiene con
+`node dist/cli/totp.js <segreto>`. Con `DATABASE_ROLE=app_role` (app) o `backoffice_role` (admin)
+il servizio usa il ruolo del database della produzione.
+
+### Comandi
 
 | Script | Cosa fa |
 |--------|---------|
-| `npm run dev` | API in sviluppo con ricarica automatica (`SERVICE_ROLE` a scelta) |
-| `npm run build` | Compilazione TypeScript |
-| `npm run start` | Avvio della build |
-| `npm run lint` | ESLint, comprese le regole sui confini tra `app` e `admin` |
+| `npm run start:dev` (`npm run dev`) | Compilazione continua e riavvio dell'API (`SERVICE_ROLE` a scelta) |
+| `npm run build` | Compilazione TypeScript in `dist/` |
+| `npm run start` | Avvio della build (`node dist/main.js`) |
+| `npm run lint` | ESLint con i controlli sui tipi e le regole sui confini tra `app` e `admin` |
 | `npm run format` / `format:check` | Prettier |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run test` | Test di unità |
-| `npm run test:integration` | Test con PostgreSQL reale in container |
-| `npm run test:core-rule` | Suite della regola core (RC) |
+| `npm run test:core-rule` | Suite della regola core (RC) su PostgreSQL reale (`swipe_slide_test`) |
+| `npm run test:integration` | API dell'app e di amministrazione con PostgreSQL reale e i ruoli del database |
 | `npm run check` | `lint`, `format:check`, `typecheck`, `test` |
-| `npm run db:generate` / `db:migrate` / `db:seed` | Migrazioni Drizzle e dati fittizi |
-| `npm run openapi` / `openapi:check` | Genera i contratti e controlla che siano aggiornati |
-| `npm run jobs -- daily` / `hourly` | Processi pianificati in locale |
-| `docker compose up` | PostgreSQL, Redis, email di prova, sostituto del controllo delle foto, API, backoffice |
+| `npm run db:migrate` / `db:seed` | Migrazioni SQL e dati fittizi di sviluppo (il seed svuota le tabelle) |
+| `npm run openapi` / `openapi:check` | Genera i contratti in `openapi/` e controlla che siano aggiornati |
+| `npm run jobs -- daily` / `hourly` | Processi pianificati in locale (comandi da fare) |
+
+Le suite con il database usano `TEST_DATABASE_URL` (di base `postgres:///swipe_slide_test?host=/tmp`),
+ricreano lo schema all'avvio e girano in sequenza (`--runInBand`).
 
 ### Variabili d'ambiente
 
@@ -503,15 +526,16 @@ vengono da Secret Manager.
 | Gruppo | Variabili |
 |--------|-----------|
 | Servizio | `NODE_ENV`, `SERVICE_ROLE`, `PORT`, `LOG_LEVEL`, `APP_TIMEZONE` (`Europe/Rome`) |
-| Database | `DATABASE_URL` (pooler), `DATABASE_URL_DIRECT` (migrazioni) |
+| Database | `DATABASE_URL` (pooler), `DATABASE_URL_DIRECT` (migrazioni), `DATABASE_ROLE` (ruolo impostato all'avvio della connessione) |
 | Redis | `REDIS_URL` |
-| Autenticazione | `JWT_ACCESS_SIGNING_KEY`, `JWT_ADMIN_SIGNING_KEY`, `HMAC_SECRET`, `HMAC_SECRET_VERSION`, `TOTP_ENCRYPTION_KEY` |
+| Autenticazione | `JWT_ACCESS_SIGNING_KEY`, `JWT_ADMIN_SIGNING_KEY`, `HMAC_SECRET`, `HMAC_SECRET_VERSION`, `TOKEN_ENCRYPTION_KEY` (token dei fornitori e ticket, in produzione Cloud KMS), `TOTP_ENCRYPTION_KEY` |
 | Apple | `APPLE_TEAM_ID`, `APPLE_BUNDLE_ID`, `APPLE_SERVICES_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY` (client secret per la revoca dei token) |
 | Google | `GOOGLE_CLIENT_ID_IOS`, `GOOGLE_CLIENT_ID_ANDROID`, `GOOGLE_CLIENT_ID_WEB` |
 | Operatori | `BACKOFFICE_SERVICE_ACCOUNT`, `IAP_AUDIENCE` |
 | Google Cloud | `GCP_PROJECT_ID`, `GCP_REGION`, `KMS_KEY_NAME`, `VISION_API_ENDPOINT` |
 | Archivio | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_PHOTOS`, `R2_BUCKET_MODERATION`, `R2_BUCKET_EXPORTS`, `R2_BUCKET_BACKUPS`, `R2_BUCKET_TEMP`, `BACKUP_ENCRYPTION_KEY` |
-| Email | `BREVO_API_KEY`, `BREVO_WEBHOOK_SECRET`, `EMAIL_FROM_NEUTRAL`, `EMAIL_FROM_PROJECT` |
+| Email | `EMAIL_TRANSPORT` (`log` in sviluppo, `brevo`), `BREVO_API_KEY`, `BREVO_WEBHOOK_SECRET`, `EMAIL_FROM_NEUTRAL`, `EMAIL_FROM_PROJECT` |
+| Sviluppo e test | `SEED_OPERATOR_TOTP_SECRET`, `TEST_DATABASE_URL` |
 | Push | `EXPO_ACCESS_TOKEN` |
 | HTTP | `CORS_ALLOWED_ORIGINS` |
 | Osservabilità | `OTEL_SERVICE_NAME`, `OTEL_EXPORTER_OTLP_ENDPOINT` |
@@ -519,8 +543,9 @@ vengono da Secret Manager.
 ### Test
 
 - **Unità**: servizi e funzioni pure, con l'orologio simulato.
-- **Integrazione**: **PostgreSQL reale** in container con le stesse migrazioni della produzione;
-  nessun mock del database, perché funzioni e trigger fanno parte di ciò che si verifica.
+- **Integrazione**: **PostgreSQL reale** con le stesse migrazioni della produzione (in locale
+  PostgreSQL di Homebrew, nella CI il servizio di GitHub Actions); nessun mock del database,
+  perché funzioni, trigger e permessi dei ruoli fanno parte di ciò che si verifica.
 - **Suite della regola core (RC)**: verifica i risultati attesi (chi vede chi, chi scrive a chi) su
   tutti gli strati, compresi i trigger con scritture dirette; tempo simulato per ritardi e
   scadenze; test di copertura delle rotte. **Non deve mai regredire**: se fallisce, la PR non entra
@@ -537,10 +562,11 @@ vengono da Secret Manager.
 
 ### Integrazione continua (D231)
 
-GitHub Actions su ogni PR: commitlint sul titolo, `npm ci`, `lint` (con i confini tra `app` e
-`admin`), `format:check`, `typecheck`, `build`, test di unità, integrazione e suite RC con
-PostgreSQL, `openapi:check`, `npm audit`, build delle immagini Docker. L'esito verde è la
-condizione per chiedere il merge.
+GitHub Actions su ogni PR (`.github/workflows/check.yml` e `pr-title.yml`): commitlint sul
+titolo, `npm ci`, `lint` (con i confini tra `app` e `admin`), `format:check`, `typecheck`,
+`build`, test di unità, suite RC e integrazione con PostgreSQL 17 come servizio, `openapi:check`,
+`npm audit --audit-level=high`; la build delle immagini Docker arriverà con il deploy. L'esito
+verde è la condizione per chiedere il merge.
 
 ### Convenzioni
 
@@ -589,15 +615,17 @@ e del controllo delle foto; dopo la beta Neon a consumo e il tempo reale a regim
 
 ## 10. Stato
 
-**Progetto in avvio.** Esistono solo questo README e il commit iniziale.
+**Prima fase dello sviluppo** (D237, branch `feat/struttura-backend`).
 
 | Elemento | Stato |
 |----------|-------|
-| Specifica tecnica (questo README) | Presente |
-| Struttura NestJS, `package.json`, script | Da creare |
-| Schema, funzioni e trigger della regola core, suite RC | Da creare (primo passo dello sviluppo) |
-| Identità personale (Apple, Google, email), moduli dell'app, cifratura dei messaggi, servizio `realtime` | Da creare |
-| API di amministrazione e backoffice `backoffice/` | Da creare |
-| Contratto OpenAPI e client generato | Da creare |
-| CI, commitlint, Dependabot, Docker | Da creare |
-| Infrastruttura Google Cloud, Neon, Upstash, R2, Brevo, Apple e Google | Da creare al deploy (regione da definire) |
+| Specifica tecnica (questo README) | Presente, allineata a D236 |
+| Struttura NestJS con `SERVICE_ROLE`, script, ESLint con i confini, commitlint, CI | Presente |
+| Schema MVP, funzioni e trigger della regola core, ruoli del database | Presente (`db/migrations/`) |
+| Suite RC su PostgreSQL reale | Presente: casi della regola core, dell'Open space, delle aziende escluse, dei blocchi, della revoca, della concorrenza e delle rotte; i casi dei moduli mancanti sono `todo` |
+| Accesso (nonce, codice, Apple, Google, sessioni) e registrazione fino a `pending_approval`, `GET /me` | Presente |
+| API di amministrazione: operatori (OTP e TOTP), aziende e domini, approvazioni, offsite | Presente |
+| Contratti OpenAPI `openapi/app.json` e `openapi/admin.json` | Presenti, generati dai DTO |
+| Moduli dell'app (profilo e foto, Open space, aziende escluse, feed, swipe, match, chat, Agenda, offsite, blocchi, segnalazioni, notifiche), cifratura dei messaggi, servizio `realtime`, processi | Da creare |
+| Backoffice `backoffice/` | In un branch a parte |
+| Infrastruttura Google Cloud, Neon, Upstash, R2, Brevo, Apple e Google; Docker | Da creare al deploy |

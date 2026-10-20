@@ -1,0 +1,15 @@
+# File esclusi da Prettier: dipendenze, cartelle generate e contratti generati.
+# Le stesse cartelle sono ignorate da ESLint (eslint.config.js).
+node_modules/
+dist/
+coverage/
+package-lock.json
+
+# Contratti OpenAPI generati da `npm run openapi`: non si modificano a mano
+openapi/
+
+# Backoffice Next.js: ha i suoi strumenti (D116)
+backoffice/
+
+# Specifica tecnica scritta a mano, con le sue tabelle
+README.md

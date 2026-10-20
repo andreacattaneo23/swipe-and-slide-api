@@ -1,0 +1,1428 @@
+{
+  "components": {
+    "schemas": {
+      "AcceptedDto": {
+        "properties": {
+          "status": {
+            "description": "Risposta uguale per ogni indirizzo (testo `signIn.neutral`)",
+            "example": "sent",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "type": "object"
+      },
+      "ApprovalStatusDto": {
+        "properties": {
+          "attemptsLeft": {
+            "description": "Tentativi rimasti (\"Ti restano 2 tentativi\")",
+            "type": "number"
+          },
+          "dueAt": {
+            "nullable": true,
+            "type": "object"
+          },
+          "explanation": {
+            "description": "Motivazione, visibile solo qui (D142)",
+            "nullable": true,
+            "type": "object"
+          },
+          "reason": {
+            "description": "Codice del motivo del rifiuto",
+            "nullable": true,
+            "type": "object"
+          },
+          "status": {
+            "enum": [
+              "none",
+              "pending",
+              "late",
+              "rejected",
+              "blocked",
+              "approved"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "attemptsLeft"
+        ],
+        "type": "object"
+      },
+      "BirthDateDto": {
+        "properties": {
+          "birthDate": {
+            "description": "Data di nascita (mai mostrata, D47)",
+            "example": "1994-05-12",
+            "type": "string"
+          },
+          "termsAccepted": {
+            "description": "Accettazione dei termini, casella non preselezionata",
+            "type": "boolean"
+          },
+          "termsVersion": {
+            "example": "2026-10-01",
+            "type": "string"
+          }
+        },
+        "required": [
+          "birthDate",
+          "termsAccepted",
+          "termsVersion"
+        ],
+        "type": "object"
+      },
+      "CityDto": {
+        "properties": {
+          "id": {
+            "example": "015146",
+            "type": "string"
+          },
+          "name": {
+            "example": "Milano",
+            "type": "string"
+          },
+          "provinceCode": {
+            "example": "MI",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "provinceCode"
+        ],
+        "type": "object"
+      },
+      "CompleteResultDto": {
+        "properties": {
+          "accessToken": {
+            "description": "Nuovo token di accesso con ambito `approval`",
+            "type": "string"
+          },
+          "expiresIn": {
+            "type": "number"
+          },
+          "reviewDueAt": {
+            "description": "Scadenza della revisione a 24 ore (D141)",
+            "format": "date-time",
+            "type": "string"
+          },
+          "scope": {
+            "enum": [
+              "approval"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending_approval"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "reviewDueAt",
+          "accessToken",
+          "expiresIn",
+          "scope"
+        ],
+        "type": "object"
+      },
+      "ConsentDto": {
+        "properties": {
+          "accepted": {
+            "description": "Consenso esplicito art. 9 (D33), casella separata",
+            "type": "boolean"
+          },
+          "textVersion": {
+            "description": "Versione del testo mostrato e accettato",
+            "example": "2026-10-01",
+            "type": "string"
+          }
+        },
+        "required": [
+          "textVersion",
+          "accepted"
+        ],
+        "type": "object"
+      },
+      "DirectoryCompanyDto": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "description": "Solo il nome (D35): niente domini né conteggi (RC-56)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "EmailDto": {
+        "properties": {
+          "email": {
+            "description": "Normalizzata dal backend (RC-04)",
+            "example": "nome@esempio.it",
+            "maxLength": 254,
+            "type": "string"
+          }
+        },
+        "required": [
+          "email"
+        ],
+        "type": "object"
+      },
+      "HealthDto": {
+        "properties": {
+          "status": {
+            "example": "ok",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "type": "object"
+      },
+      "LogoutDto": {
+        "properties": {
+          "from": {
+            "default": "device",
+            "description": "\"Esci da tutti i dispositivi\" con `all`",
+            "enum": [
+              "device",
+              "all"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "MeDto": {
+        "properties": {
+          "company": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OwnCompanyDto"
+              }
+            ],
+            "description": "Solo la propria azienda",
+            "nullable": true,
+            "type": "object"
+          },
+          "deletionRequestedAt": {
+            "description": "Ripensamento della cancellazione in corso (D83)",
+            "nullable": true,
+            "type": "object"
+          },
+          "deletionScheduledAt": {
+            "description": "Cancellazione prevista (rifiuto non ripresentato, D142)",
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "type": "string"
+          },
+          "openSpaceEnabled": {
+            "description": "Stato del proprio Open space, solo per l'utente stesso (D157)",
+            "type": "boolean"
+          },
+          "openSpacePrompt": {
+            "description": "Dopo un cambio di azienda: chiedere se riattivarlo",
+            "type": "boolean"
+          },
+          "registrationExpiresAt": {
+            "description": "Fine dei 7 giorni per completare la registrazione",
+            "nullable": true,
+            "type": "object"
+          },
+          "reverificationDueAt": {
+            "nullable": true,
+            "type": "object"
+          },
+          "scope": {
+            "enum": [
+              "full",
+              "registration",
+              "approval",
+              "restore",
+              "limited"
+            ],
+            "type": "string"
+          },
+          "signInMethod": {
+            "description": "Modo di accesso (D224)",
+            "enum": [
+              "apple",
+              "google",
+              "email"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "registering",
+              "pending_approval",
+              "active",
+              "reverifying",
+              "suspended"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "scope",
+          "signInMethod",
+          "openSpaceEnabled",
+          "openSpacePrompt"
+        ],
+        "type": "object"
+      },
+      "NonceDto": {
+        "properties": {
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "nonce": {
+            "description": "Valore casuale a uso singolo: al fornitore la sua impronta SHA-256 (Apple) o il valore (Google)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "nonce",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
+      "OpenSpaceChoiceDto": {
+        "properties": {
+          "enabled": {
+            "description": "\"Attiva l'open space\" (vero) o \"Per ora no\" (falso), D156",
+            "type": "boolean"
+          },
+          "textVersion": {
+            "description": "Versione del testo mostrato e accettato",
+            "example": "2026-10-01",
+            "type": "string"
+          }
+        },
+        "required": [
+          "textVersion",
+          "enabled"
+        ],
+        "type": "object"
+      },
+      "OwnCompanyDto": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "PrivacyDto": {
+        "properties": {
+          "companyIds": {
+            "description": "Aziende escluse, dall'elenco consultabile (D175)",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 15,
+            "type": "array"
+          }
+        },
+        "required": [
+          "companyIds"
+        ],
+        "type": "object"
+      },
+      "ProviderTokenDto": {
+        "properties": {
+          "authorizationCode": {
+            "description": "Codice di autorizzazione per il server (solo per la revoca, Proposta 7)",
+            "type": "string"
+          },
+          "identityToken": {
+            "description": "Token d'identità del fornitore (JWT)",
+            "type": "string"
+          },
+          "nonce": {
+            "description": "Nonce emesso da `POST /auth/nonce`, in chiaro",
+            "type": "string"
+          },
+          "registrationTicket": {
+            "description": "Solo in registrazione: ticket di un accesso senza account (Proposta 5)",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "RefreshDto": {
+        "properties": {
+          "refreshToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "refreshToken"
+        ],
+        "type": "object"
+      },
+      "RegistrationProfileDto": {
+        "properties": {
+          "firstName": {
+            "maxLength": 30,
+            "type": "string"
+          },
+          "gender": {
+            "enum": [
+              "woman",
+              "man",
+              "non_binary",
+              "undisclosed"
+            ],
+            "type": "string"
+          },
+          "homeCityId": {
+            "description": "Codice ISTAT del comune (D49)",
+            "example": "015146",
+            "type": "string"
+          },
+          "interestedIn": {
+            "description": "Mai mostrato (D47, D90)",
+            "enum": [
+              "men",
+              "women",
+              "everyone"
+            ],
+            "type": "string"
+          },
+          "lastName": {
+            "description": "Visibile solo dopo il match (D56)",
+            "maxLength": 40,
+            "type": "string"
+          }
+        },
+        "required": [
+          "firstName",
+          "gender",
+          "interestedIn",
+          "homeCityId"
+        ],
+        "type": "object"
+      },
+      "RegistrationSessionDto": {
+        "properties": {
+          "result": {
+            "enum": [
+              "created",
+              "existingAccount"
+            ],
+            "type": "string"
+          },
+          "session": {
+            "$ref": "#/components/schemas/SessionDto"
+          }
+        },
+        "required": [
+          "result",
+          "session"
+        ],
+        "type": "object"
+      },
+      "RegistrationStateDto": {
+        "properties": {
+          "completedSteps": {
+            "items": {
+              "enum": [
+                "account",
+                "birthDate",
+                "workEmail",
+                "consent",
+                "profile",
+                "openSpace",
+                "privacy"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "expiresAt": {
+            "description": "Fine dei 7 giorni dall'inizio (D82)",
+            "format": "date-time",
+            "type": "string"
+          },
+          "nextStep": {
+            "description": "Passo successivo; \"privacy\" è facoltativo",
+            "enum": [
+              "account",
+              "birthDate",
+              "workEmail",
+              "consent",
+              "profile",
+              "openSpace",
+              "privacy",
+              "complete"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "completedSteps",
+          "nextStep",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
+      "SessionDto": {
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "expiresIn": {
+            "example": 900,
+            "type": "number"
+          },
+          "refreshToken": {
+            "description": "Opaco, 30 giorni, sostituito a ogni rinnovo",
+            "type": "string"
+          },
+          "scope": {
+            "enum": [
+              "full",
+              "registration",
+              "approval",
+              "restore",
+              "limited"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "accessToken",
+          "refreshToken",
+          "expiresIn",
+          "scope"
+        ],
+        "type": "object"
+      },
+      "SignInResultDto": {
+        "properties": {
+          "registrationTicket": {
+            "description": "Con `noAccount` da Apple o Google: valido 10 minuti",
+            "type": "string"
+          },
+          "result": {
+            "enum": [
+              "signedIn",
+              "noAccount",
+              "existingAccount",
+              "created"
+            ],
+            "type": "string"
+          },
+          "session": {
+            "$ref": "#/components/schemas/SessionDto"
+          }
+        },
+        "required": [
+          "result"
+        ],
+        "type": "object"
+      },
+      "VerifyCodeDto": {
+        "properties": {
+          "code": {
+            "description": "Codice OTP di 6 cifre (D136)",
+            "example": "123456",
+            "type": "string"
+          },
+          "email": {
+            "description": "Normalizzata dal backend (RC-04)",
+            "example": "nome@esempio.it",
+            "maxLength": 254,
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "code"
+        ],
+        "type": "object"
+      },
+      "WorkEmailDto": {
+        "properties": {
+          "declarationAccepted": {
+            "description": "Dichiarazione P7 (D136), casella non preselezionata",
+            "type": "boolean"
+          },
+          "declarationVersion": {
+            "example": "2026-10-01",
+            "type": "string"
+          },
+          "email": {
+            "description": "Normalizzata dal backend (RC-04)",
+            "example": "nome.cognome@azienda.it",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "declarationAccepted",
+          "declarationVersion"
+        ],
+        "type": "object"
+      },
+      "WorkEmailVerifyDto": {
+        "properties": {
+          "code": {
+            "example": "123456",
+            "type": "string"
+          },
+          "declarationAccepted": {
+            "description": "Dichiarazione P7 (D136), casella non preselezionata",
+            "type": "boolean"
+          },
+          "declarationVersion": {
+            "example": "2026-10-01",
+            "type": "string"
+          },
+          "email": {
+            "description": "Normalizzata dal backend (RC-04)",
+            "example": "nome.cognome@azienda.it",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "declarationAccepted",
+          "declarationVersion",
+          "code"
+        ],
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "bearer": {
+        "bearerFormat": "JWT",
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "contact": {},
+    "description": "",
+    "title": "Swipe & Slide — API dell'app",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/auth/apple": {
+      "post": {
+        "operationId": "AuthController_apple",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderTokenDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignInResultDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/code": {
+      "post": {
+        "operationId": "AuthController_code",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/google": {
+      "post": {
+        "operationId": "AuthController_google",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderTokenDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignInResultDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "operationId": "AuthController_logout",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogoutDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/nonce": {
+      "post": {
+        "operationId": "AuthController_nonce",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NonceDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "operationId": "AuthController_refresh",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/verify": {
+      "post": {
+        "operationId": "AuthController_verify",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignInResultDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/cities": {
+      "get": {
+        "operationId": "DirectoryController_cities",
+        "parameters": [
+          {
+            "description": "Prefisso del nome, almeno 2 caratteri",
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CityDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "directory"
+        ]
+      }
+    },
+    "/companies": {
+      "get": {
+        "operationId": "DirectoryController_companies",
+        "parameters": [
+          {
+            "description": "Prefisso del nome, almeno 2 caratteri",
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DirectoryCompanyDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "directory"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "HealthController_health",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/me": {
+      "get": {
+        "operationId": "MeController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/me/approval": {
+      "get": {
+        "operationId": "MeController_approval",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApprovalStatusDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/registration": {
+      "get": {
+        "operationId": "RegistrationController_state",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationStateDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "registration"
+        ]
+      }
+    },
+    "/registration/apple": {
+      "post": {
+        "operationId": "RegistrationController_apple",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderTokenDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationSessionDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "registration"
+        ]
+      }
+    },
+    "/registration/birth-date": {
+      "put": {
+        "operationId": "RegistrationController_birthDate",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BirthDateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationStateDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "registration"
+        ]
+      }
+    },
+    "/registration/complete": {
+      "post": {
+        "operationId": "RegistrationController_complete",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompleteResultDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "registration"
+        ]
+      }
+    },
+    "/registration/consent": {
+      "put": {
+        "operationId": "RegistrationController_consent",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConsentDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationStateDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "registration"
+        ]
+      }
+    },
+    "/registration/google": {
+      "post": {
+        "operationId": "RegistrationController_google",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProviderTokenDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationSessionDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "registration"
+        ]
+      }
+    },
+    "/registration/open-space": {
+      "put": {
+        "operationId": "RegistrationController_openSpace",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpenSpaceChoiceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationStateDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "registration"
+        ]
+      }
+    },
+    "/registration/personal-email": {
+      "post": {
+        "operationId": "RegistrationController_personalEmail",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "registration"
+        ]
+      }
+    },
+    "/registration/personal-email/verify": {
+      "post": {
+        "operationId": "RegistrationController_personalEmailVerify",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationSessionDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "registration"
+        ]
+      }
+    },
+    "/registration/privacy": {
+      "put": {
+        "operationId": "RegistrationController_privacy",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PrivacyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationStateDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "registration"
+        ]
+      }
+    },
+    "/registration/profile": {
+      "put": {
+        "operationId": "RegistrationController_profile",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegistrationProfileDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationStateDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "registration"
+        ]
+      }
+    },
+    "/registration/work-email": {
+      "post": {
+        "operationId": "RegistrationController_workEmail",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkEmailDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "registration"
+        ]
+      }
+    },
+    "/registration/work-email/verify": {
+      "post": {
+        "operationId": "RegistrationController_workEmailVerify",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkEmailVerifyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegistrationStateDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "registration"
+        ]
+      }
+    }
+  },
+  "servers": [],
+  "tags": []
+}

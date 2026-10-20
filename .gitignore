@@ -1,0 +1,32 @@
+# Le cartelle generate sono ancorate con "/" alla radice: senza, la regola varrebbe in ogni
+# sottocartella e potrebbe nascondere codice vero (es. una pagina app/audit/logs/ del backoffice).
+# Le regole proprie del backoffice stanno in backoffice/.gitignore.
+
+# Dipendenze (in ogni cartella: anche backoffice/node_modules)
+node_modules/
+
+# Build e risultati dei test del backend
+/dist/
+/coverage/
+*.tsbuildinfo
+
+# Variabili d'ambiente e segreti: solo .env.example entra nel repository
+.env
+.env.*
+!.env.example
+*.pem
+*.p8
+
+# Log
+/logs/
+npm-debug.log*
+
+# Editor e sistema
+.DS_Store
+.idea/
+/.vscode/*
+!/.vscode/extensions.json
+*.swp
+
+# Cache locali degli strumenti
+.eslintcache

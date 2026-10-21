@@ -1,4 +1,5 @@
-import { Body, Controller, HttpCode, Ip, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, Inject, Ip, Post } from '@nestjs/common';
+import { eq } from 'drizzle-orm';
 import { ApiAcceptedResponse, ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { ApiError, ErrorCode } from '../../infra/http/api-error';
 import { RateLimiter } from '../../infra/cache/rate-limiter';
@@ -7,6 +8,9 @@ import { AuthContext } from '../../core/auth/auth-context';
 import { Public, Scopes } from '../../core/auth/scopes.decorator';
 import { normalizeEmail } from '../../domain/email/email-address';
 import { OtpService } from '../../domain/otp/otp.service';
+import { StoreReviewService } from '../../domain/safety/store-review.service';
+import { DATABASE, Database } from '../../infra/database/database';
+import { users } from '../../infra/database/schema';
 import {
   AcceptedDto,
   EmailDto,
@@ -36,6 +40,8 @@ export class AuthController {
     private readonly tickets: RegistrationTicketService,
     private readonly sessions: SessionsService,
     private readonly limiter: RateLimiter,
+    private readonly storeReview: StoreReviewService,
+    @Inject(DATABASE) private readonly db: Database,
   ) {}
 
   @Post('nonce')
@@ -61,12 +67,14 @@ export class AuthController {
     if (!email) throw ApiError.badRequest(ErrorCode.validation);
     const identity = await this.identities.identityByEmail(email.email);
     const workUser = identity ? null : await this.identities.userByActiveWorkEmail(email.email);
+    // Account dimostrativi: nessun invio, si entra con il codice di revisione (D42)
+    const demo = identity ? await this.isDemo(identity.userId) : false;
     await this.otp.issue({
       email: email.email,
       purpose: 'login',
       from: workUser ? 'neutral' : 'project',
       ip,
-      send: identity !== null || workUser !== null,
+      send: !demo && (identity !== null || workUser !== null),
     });
     return { status: 'sent' };
   }
@@ -79,8 +87,19 @@ export class AuthController {
     await this.limit(`verify:${ip}`, 30);
     const email = normalizeEmail(body.email);
     if (!email) throw ApiError.badRequest(ErrorCode.validation);
+    const demoIdentity = await this.identities.identityByEmail(email.email);
+    if (demoIdentity?.provider === 'email' && (await this.isDemo(demoIdentity.userId))) {
+      // Solo l'email e il codice di revisione, con una finestra aperta (D42, RC-87, RC-209)
+      if (!(await this.storeReview.verifyCode(body.code, demoIdentity.userId))) {
+        throw ApiError.badRequest(ErrorCode.codeInvalid);
+      }
+      return {
+        result: 'signedIn',
+        session: await this.sessions.create(demoIdentity.userId, 'review_code'),
+      };
+    }
     await this.otp.verifyOrThrow(email.email, 'login', body.code);
-    const identity = await this.identities.identityByEmail(email.email);
+    const identity = demoIdentity;
     if (identity && identity.provider !== 'email') {
       // L'email personale di un account Apple o Google non apre sessioni (Proposta 4)
       throw ApiError.conflict(ErrorCode.emailInUse);
@@ -141,6 +160,14 @@ export class AuthController {
     const session = await this.identities.signIn(provider, identity.subject);
     if (session) return { result: 'signedIn', session };
     return { result: 'noAccount', registrationTicket: this.tickets.issue(identity) };
+  }
+
+  private async isDemo(userId: string): Promise<boolean> {
+    const [row] = await this.db
+      .select({ isDemo: users.isDemo })
+      .from(users)
+      .where(eq(users.id, userId));
+    return row?.isDemo === true;
   }
 
   private async limit(key: string, perMinute: number): Promise<void> {

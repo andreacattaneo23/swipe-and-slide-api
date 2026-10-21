@@ -1,5 +1,6 @@
 import { DynamicModule, INestApplication } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { WsAdapter } from '@nestjs/platform-ws';
 import { Logger as PinoLogger, LoggerModule } from 'nestjs-pino';
 import { AdminApiModule } from './admin/admin-api.module';
 import { AppApiModule } from './app/app-api.module';
@@ -49,5 +50,7 @@ export async function createApp(
   const app = await NestFactory.create(root, { bodyParser: false, bufferLogs: true });
   app.useLogger(app.get(PinoLogger));
   setupApp(app);
+  // Canale WebSocket del tempo reale con `ws` (D182)
+  if (config.serviceRole === 'realtime') app.useWebSocketAdapter(new WsAdapter(app));
   return app;
 }

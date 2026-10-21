@@ -454,6 +454,7 @@
     'agenda.trip.milan': ['In trasferta a Milano', 'N', 'D149, fascia di sfondo; approvato con D196'],
     'agenda.empty': ['Agenda libera: nessun meeting in programma', 'N', 'D145, testo a tema (D197); approvato con D196'],
     'agenda.empty.suspended': ['I meeting sono in pausa finché l\'account è in sospeso.', 'N', 'AF "Agenda" (solo meeting dei match attivi, D64) e tabella degli stati (match congelati, D41); [Proposta] scheda Agenda nello stato in sospeso, EmptyState; FRONTEND (correzione di allineamento), approvato con D225'],
+    'agenda.empty.sanction': ['I meeting sono in pausa finché dura la sospensione.', 'N', 'Come sopra; AF "Agenda" (solo i meeting dei match attivi, D64); [Proposta] come per l\'account in sospeso (D233); scheda Agenda di SuspensionScreen. Nel codice, finché…; FRONTEND (punti aperti), approvato con D225 e D234'],
     'agenda.mon': ['Lun', 'G'], 'agenda.tue': ['Mar', 'G'], 'agenda.wed': ['Mer', 'G'], 'agenda.thu': ['Gio', 'G'],
     'agenda.fri': ['Ven', 'G'], 'agenda.sat': ['Sab', 'G'], 'agenda.sun': ['Dom', 'G'],
     'elisa.name': ['Elisa', 'F'], 'elisa.fullName': ['Elisa Marini', 'F'],
@@ -771,6 +772,7 @@
     'search.empty': ['Nessun risultato per questa ricerca.', 'N', 'D206, SearchField e ListPicker'],
     'match.empty': ['Nessun deal chiuso per ora: si comincia dal feed.', 'N', 'D206, EmptyState della scheda Match'],
     'match.empty.suspended': ['Match e chat sono in pausa finché l\'account è in sospeso.', 'N', 'AF "Cosa può fare l\'utente in ogni stato" (In sospeso, "Vedere match e chat": no, sono congelati; D19, D41); scheda Match nello stato in sospeso, EmptyState; FRONTEND (correzione di allineamento), approvato con D225'],
+    'match.empty.sanction': ['Match e chat sono in pausa finché dura la sospensione.', 'N', 'AF "Sanzioni e ricorsi" (sospensione disciplinare: match e chat congelati, D75, D197), "Maggiore età" (la cautelativa funziona come la disciplinare, D197), "Avvio e…; FRONTEND (punti aperti), approvato con D225 e D234'],
     'badge.escalation': ['Escalation', 'C', 'D53, D206: ProfileBadge, escalation ricevuta sulla card'],
     'registration.declaration.error': ['Conferma la dichiarazione per continuare.', 'N', 'D213, registrazione: dichiarazione non spuntata'],
     'registration.consent.error': ['Per continuare serve il tuo consenso.', 'N', 'D213, registrazione: consenso esplicito non dato (D33)'],
@@ -858,6 +860,7 @@
     'a11y.tab': ['scheda {count} di {total}', 'N', 'Catalogo, scheda TabBar, Accessibilità ("Agenda, scheda 3 di 5, novità"). Solo su iOS, dove VoiceOver non dice da sé ruolo e posizione di una scheda: l\'etichetta…; FRONTEND (lotto-4), approvato con D225'],
     'profile.unavailable': ['Profilo non più disponibile', 'N', 'Catalogo, scheda DetailScreen (stato "non più disponibile"), variante profile; stessa forma di "Match non più disponibile" (AF, "Testi a tema", D61), senza motivo…; FRONTEND (lotto-4), approvato con D225'],
     'profile.suspended': ['Il profilo si modifica di nuovo quando ripristini l\'account.', 'N', 'AF tabella degli stati (In sospeso, "Modificare profilo, Open space e aziende escluse": no, solo ripristino, cancellazione, revoca del consenso e "Scarica i miei…; FRONTEND (correzione di allineamento), approvato con D225'],
+    'profile.sanction': ['Il profilo si modifica di nuovo quando finisce la sospensione.', 'N', 'AF "Cosa può fare l\'utente in ogni stato" (durante una sospensione si accede solo per motivazione, ricorso, cancellazione, dati e, nella cautelativa, verifica…; FRONTEND (punti aperti), approvato con D225 e D234'],
     'offsite.unavailable': ['Offsite non più disponibile', 'N', 'Catalogo, scheda DetailScreen, variante offsite: offsite annullato o non più aperto (AF, "Offsite", D150, D197), senza motivo; FRONTEND (lotto-4), approvato con D225'],
     // lotto 5, compito A
     'deadline.days': ['{count} giorni per il primo messaggio', 'N', 'DeadlineIndicator, stato "giorni rimasti": forma generale di deal.days (D62), riga a destra in "Deal Closed!" (08); FRONTEND (lotto-5), approvato con D225'],

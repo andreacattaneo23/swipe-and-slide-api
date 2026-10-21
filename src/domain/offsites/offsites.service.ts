@@ -4,6 +4,8 @@ import { DATABASE, Database, Executor } from '../../infra/database/database';
 import { offsites } from '../../infra/database/schema';
 import { AuditService } from '../../infra/audit/audit.service';
 import { ApiError } from '../../infra/http/api-error';
+import { CryptoService } from '../../infra/crypto/crypto.service';
+import { OBJECT_STORAGE, ObjectStorage } from '../../infra/storage/object-storage';
 import { OperatorAction } from '../companies/companies.service';
 
 export interface OffsiteInput {
@@ -37,19 +39,58 @@ export interface OffsiteRecord {
   cancelledAt: Date | null;
   /** Iscritti arrotondati (D167): `0` vuol dire "meno di 10", poi la decina per difetto. */
   attendeesRounded: number;
+  /** URL firmato della copertina, pochi minuti. */
+  coverUrl: string | null;
 }
 
 /**
  * Offsite creati solo dal backoffice (D150): bozza, modifica, pubblicazione, annullamento.
  * Mai l'elenco né il numero esatto degli iscritti, nemmeno qui (D153, D167).
- * [Proposta] Avviso agli iscritti all'annullamento e copertina con URL firmato: da fare.
+ * Modifica e annullamento accodano un avviso in `offsite_notices`: il backoffice non legge mai le
+ * iscrizioni (D90, RC-117), e il processo `offsite-notices` avvisa gli iscritti con l'evento
+ * `offsite` e la notifica a tema, senza nomi di persone (D197). [Proposta] Copertina con URL
+ * firmato: da fare.
  */
 @Injectable()
 export class OffsitesService {
   constructor(
     @Inject(DATABASE) private readonly db: Database,
     private readonly audit: AuditService,
+    @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
+    private readonly crypto: CryptoService,
   ) {}
+
+  /** Copertina nell'archivio (D150): sostituisce la precedente. */
+  async setCover(
+    id: string,
+    body: Buffer,
+    contentType: string,
+    by: OperatorAction,
+  ): Promise<OffsiteRecord> {
+    const key = `offsites/${id}/${this.crypto.randomToken(12).toLowerCase()}`;
+    await this.storage.write(key, body, contentType);
+    let previous: string | null = null;
+    try {
+      const record = await this.db.transaction(async (tx) => {
+        const current = await this.lock(tx, id);
+        if (current.status === 'cancelled' || current.status === 'completed') {
+          throw ApiError.conflict('offsite.notEditable');
+        }
+        previous = current.coverKey;
+        await tx
+          .update(offsites)
+          .set({ coverKey: key, updatedAt: sql`now()` })
+          .where(eq(offsites.id, id));
+        await this.log(tx, 'offsite_updated', id, by);
+        return this.get(id, tx);
+      });
+      if (previous) await this.storage.delete(previous).catch(() => undefined);
+      return record;
+    } catch (error) {
+      await this.storage.delete(key).catch(() => undefined);
+      throw error;
+    }
+  }
 
   async list(params: { limit: number; before?: string }): Promise<OffsiteRecord[]> {
     const rows = await this.db
@@ -89,7 +130,7 @@ export class OffsitesService {
     input: Partial<OffsiteInput>,
     by: OperatorAction,
   ): Promise<OffsiteRecord> {
-    return this.db.transaction(async (tx) => {
+    const updated = await this.db.transaction(async (tx) => {
       const current = await this.lock(tx, id);
       if (current.status === 'cancelled' || current.status === 'completed') {
         throw ApiError.conflict('offsite.notEditable');
@@ -104,8 +145,10 @@ export class OffsitesService {
         .set({ ...changes, updatedAt: sql`now()` })
         .where(eq(offsites.id, id));
       await this.log(tx, 'offsite_updated', id, by);
+      if (current.status === 'published') await this.queueNotice(tx, id, 'updated');
       return this.get(id, tx);
     });
+    return updated;
   }
 
   async publish(id: string, by: OperatorAction): Promise<OffsiteRecord> {
@@ -122,7 +165,7 @@ export class OffsitesService {
   }
 
   async cancel(id: string, by: OperatorAction): Promise<OffsiteRecord> {
-    return this.db.transaction(async (tx) => {
+    const cancelled = await this.db.transaction(async (tx) => {
       const current = await this.lock(tx, id);
       if (current.status === 'cancelled' || current.status === 'completed') {
         throw ApiError.conflict('offsite.notEditable');
@@ -132,8 +175,21 @@ export class OffsitesService {
         .set({ status: 'cancelled', cancelledAt: sql`now()`, updatedAt: sql`now()` })
         .where(eq(offsites.id, id));
       await this.log(tx, 'offsite_cancelled', id, by);
+      if (current.status === 'published') await this.queueNotice(tx, id, 'cancelled');
       return this.get(id, tx);
     });
+    return cancelled;
+  }
+
+  /** Avviso agli iscritti, inviato dal processo `offsite-notices` (D197). */
+  private async queueNotice(
+    tx: Executor,
+    id: string,
+    kind: 'updated' | 'cancelled',
+  ): Promise<void> {
+    await tx.execute(
+      sql`insert into offsite_notices (offsite_id, kind) values (${id}::uuid, ${kind})`,
+    );
   }
 
   private checkDates(startsAt: Date, endsAt: Date): void {
@@ -160,7 +216,7 @@ export class OffsitesService {
         sessionId: by.sessionId,
         objectType: 'offsite',
         objectId: id,
-        explanation: by.explanation,
+        explanation: by.explanation || null,
       },
       tx,
     );
@@ -174,6 +230,7 @@ export class OffsitesService {
       sql`select rounded_attendee_count(${row.id}::uuid) as rounded`,
     );
     const { createdBy: _createdBy, ...rest } = row;
-    return { ...rest, attendeesRounded: Number(count.rows[0]?.rounded ?? 0) };
+    const coverUrl = row.coverKey ? (await this.storage.signedGetUrl(row.coverKey, 600)).url : null;
+    return { ...rest, attendeesRounded: Number(count.rows[0]?.rounded ?? 0), coverUrl };
   }
 }

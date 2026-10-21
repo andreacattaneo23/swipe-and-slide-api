@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useActionState, useEffect, useState, useTransition } from 'react';
 import { Dialog } from '@/components/Dialog';
 import { Icon } from '@/components/Icon';
@@ -9,7 +10,7 @@ import { t } from '@/texts';
 import type { RemovalPreview } from '@/server/admin-api/types';
 import { cancelRemovalAction, loadRemovalPreview, startRemovalAction } from './actions';
 
-/** Azioni di una riga dell'elenco: rimozione con conferma rafforzata o suo annullamento. */
+/** Azioni di una riga dell'elenco: modifica, rimozione con conferma rafforzata o annullamento. */
 export function CompanyActions({
   companyId,
   name,
@@ -28,6 +29,12 @@ export function CompanyActions({
   };
   return (
     <div className="row-actions">
+      {removing ? null : (
+        <Link href={`/companies/${encodeURIComponent(companyId)}`} className="row-actions__item">
+          {t('backoffice.edit')}
+          <span className="visually-hidden"> {name}</span>
+        </Link>
+      )}
       {removing ? (
         <button type="button" className="row-actions__item" onClick={show}>
           {t('backoffice.removal.cancel')}
@@ -71,7 +78,7 @@ interface DialogProps {
   name: string;
 }
 
-/** Finestra di rimozione (mockup 18b): anteprima, effetti, motivazione, nome e TOTP (D93, D111). */
+/** Finestra di rimozione (mockup 18b): anteprima, effetti, motivazione e nome esatto (D93, D111, D244). */
 export function RemovalDialog({ open, onClose, companyId, name }: DialogProps) {
   const [preview, setPreview] = useState<RemovalPreview | null>(null);
   const [loading, startLoading] = useTransition();
@@ -160,16 +167,6 @@ export function RemovalDialog({ open, onClose, companyId, name }: DialogProps) {
             />
             {nameMatches ? <Icon name="check" className="confirm-name__ok" /> : null}
           </div>
-          <TextInput
-            label={t('backoffice.removalModal.code')}
-            name="totpCode"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            maxLength={7}
-            required
-            className="field--code"
-            error={state.fieldErrors?.totpCode}
-          />
         </div>
         <Note icon="info">{t('backoffice.removalModal.audit')}</Note>
         <FormMessage status={state.status} message={state.message} />

@@ -6,7 +6,7 @@ import request from 'supertest';
 import type { App } from 'supertest/types';
 import { normalizeEmail } from '../../src/domain/email/email-address';
 import { CryptoService } from '../../src/infra/crypto/crypto.service';
-import type { LogEmailSender } from '../../src/infra/email/log-email-sender';
+import type { CaptureEmailSender } from '../support/capture-email-sender';
 import { Factory } from '../support/factory';
 import { createTestApp, FakeProviders } from '../support/test-app';
 import { testConfig } from '../support/test-config';
@@ -16,7 +16,7 @@ const pool = new Pool({ connectionString: TEST_DATABASE_URL, max: 3 });
 const f = new Factory(pool);
 const crypto = new CryptoService(testConfig());
 let app: INestApplication<App>;
-let email: LogEmailSender;
+let email: CaptureEmailSender;
 let providers: FakeProviders;
 let company: string;
 let domain: string;
@@ -126,8 +126,14 @@ describe("Registrazione con l'email personale fino a pending_approval", () => {
       scope: 'approval',
       signInMethod: 'email',
       openSpaceEnabled: false,
+      sanction: null,
     });
     expect(me.body.company.id).toBe(company);
+    // Dati propri per l'app: nome, email personale, email aziendale mascherata, cosa manca
+    expect(typeof me.body.firstName).toBe('string');
+    expect(me.body.personalEmail).toMatch(/@/);
+    expect(me.body.workEmail).toMatch(/\*/);
+    expect(me.body.missing).toContain('photos');
     // Il vecchio token di registrazione non vale più: l'ambito della sessione è cambiato
     await api().get('/registration').set(auth(token)).expect(401);
     const approval = await api().get('/me/approval').set(auth(done.body.accessToken)).expect(200);

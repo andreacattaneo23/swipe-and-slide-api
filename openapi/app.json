@@ -14,6 +14,340 @@
         ],
         "type": "object"
       },
+      "AccessInfoDto": {
+        "properties": {
+          "isPrivateRelay": {
+            "description": "Email nascosta di Apple (`settings.access.relay`)",
+            "type": "boolean"
+          },
+          "personalEmail": {
+            "description": "Mai mostrata ad altri",
+            "nullable": true,
+            "type": "object"
+          },
+          "provider": {
+            "enum": [
+              "apple",
+              "google",
+              "email"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "workEmail": {
+            "description": "Email aziendale attiva",
+            "nullable": true,
+            "type": "object"
+          },
+          "workEmailSignIn": {
+            "description": "Accesso con l’email aziendale (D233)",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "isPrivateRelay",
+          "workEmailSignIn"
+        ],
+        "type": "object"
+      },
+      "AccessMethodDto": {
+        "properties": {
+          "code": {
+            "description": "Con l’email: codice inviato alla nuova email",
+            "type": "string"
+          },
+          "email": {
+            "description": "Con l’email: nuova email personale",
+            "type": "string"
+          },
+          "identityToken": {
+            "description": "Con Apple o Google: token d’identità",
+            "type": "string"
+          },
+          "nonce": {
+            "description": "Con Apple o Google: nonce di `POST /auth/nonce`",
+            "type": "string"
+          },
+          "provider": {
+            "enum": [
+              "apple",
+              "google",
+              "email"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider"
+        ],
+        "type": "object"
+      },
+      "AccessTokenDto": {
+        "properties": {
+          "accessToken": {
+            "description": "Nuovo token di accesso con l’ambito aggiornato",
+            "type": "string"
+          },
+          "expiresIn": {
+            "type": "number"
+          },
+          "scope": {
+            "enum": [
+              "full",
+              "registration",
+              "approval",
+              "restore",
+              "limited"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "accessToken",
+          "expiresIn",
+          "scope"
+        ],
+        "type": "object"
+      },
+      "AccessUpdateDto": {
+        "properties": {
+          "workEmailSignIn": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "workEmailSignIn"
+        ],
+        "type": "object"
+      },
+      "AgendaDto": {
+        "properties": {
+          "meetings": {
+            "items": {
+              "$ref": "#/components/schemas/MeetingDto"
+            },
+            "type": "array"
+          },
+          "offsites": {
+            "description": "Promemoria degli offsite (D151)",
+            "items": {
+              "$ref": "#/components/schemas/AgendaOffsiteDto"
+            },
+            "type": "array"
+          },
+          "trips": {
+            "description": "Fasce di sfondo, solo proprie (D149)",
+            "items": {
+              "$ref": "#/components/schemas/AgendaTripDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "meetings",
+          "trips",
+          "offsites"
+        ],
+        "type": "object"
+      },
+      "AgendaOffsiteDto": {
+        "properties": {
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "startsAt",
+          "endsAt"
+        ],
+        "type": "object"
+      },
+      "AgendaPeopleItemDto": {
+        "properties": {
+          "firstName": {
+            "type": "string"
+          },
+          "hasPendingInvite": {
+            "description": "C'è già una proposta in sospeso: non si può scegliere (D147)",
+            "type": "boolean"
+          },
+          "matchId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "photo": {
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "matchId",
+          "firstName",
+          "hasPendingInvite"
+        ],
+        "type": "object"
+      },
+      "AgendaPersonDto": {
+        "properties": {
+          "firstName": {
+            "type": "string"
+          },
+          "photo": {
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "firstName"
+        ],
+        "type": "object"
+      },
+      "AgendaTripDto": {
+        "properties": {
+          "city": {
+            "description": "Nome reale del comune scelto, solo per l'utente stesso (D149)",
+            "type": "string"
+          },
+          "from": {
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "to": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "city",
+          "from",
+          "to"
+        ],
+        "type": "object"
+      },
+      "AgeVerificationStatusDto": {
+        "properties": {
+          "requested": {
+            "type": "boolean"
+          },
+          "requestedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "uploaded": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "requested",
+          "uploaded"
+        ],
+        "type": "object"
+      },
+      "AnswerDto": {
+        "properties": {
+          "answer": {
+            "description": "Risposta, fino a 150 caratteri (D56)",
+            "type": "string"
+          },
+          "question": {
+            "description": "Codice della domanda a tema",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question",
+          "answer"
+        ],
+        "type": "object"
+      },
+      "AnswersDto": {
+        "properties": {
+          "answers": {
+            "description": "Fino a 3 domande (D56)",
+            "items": {
+              "$ref": "#/components/schemas/AnswerDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "answers"
+        ],
+        "type": "object"
+      },
+      "AppealDto": {
+        "properties": {
+          "text": {
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "type": "object"
+      },
+      "AppealStatusDto": {
+        "properties": {
+          "status": {
+            "enum": [
+              "pending",
+              "accepted",
+              "rejected"
+            ],
+            "type": "string"
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "submittedAt"
+        ],
+        "type": "object"
+      },
+      "AppleFormPostDto": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          },
+          "id_token": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "user": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "ApprovalStatusDto": {
         "properties": {
           "attemptsLeft": {
@@ -30,9 +364,16 @@
             "type": "object"
           },
           "reason": {
-            "description": "Codice del motivo del rifiuto",
+            "description": "Codice del motivo del rifiuto, uguale nel backoffice (D142)",
+            "enum": [
+              "non_compliant_photo",
+              "inappropriate_photos",
+              "fake_profile",
+              "disallowed_text",
+              "reveals_company_or_clients"
+            ],
             "nullable": true,
-            "type": "object"
+            "type": "string"
           },
           "status": {
             "enum": [
@@ -49,6 +390,17 @@
         "required": [
           "status",
           "attemptsLeft"
+        ],
+        "type": "object"
+      },
+      "AttendancePatchDto": {
+        "properties": {
+          "showOnProfile": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "showOnProfile"
         ],
         "type": "object"
       },
@@ -75,6 +427,125 @@
         ],
         "type": "object"
       },
+      "BlockDto": {
+        "properties": {
+          "userId": {
+            "description": "Persona del feed o di un match",
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId"
+        ],
+        "type": "object"
+      },
+      "BlockedPersonDto": {
+        "properties": {
+          "firstName": {
+            "type": "string"
+          },
+          "photoUrl": {
+            "description": "Foto principale, URL firmato",
+            "nullable": true,
+            "type": "object"
+          },
+          "userId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId",
+          "firstName"
+        ],
+        "type": "object"
+      },
+      "CardDto": {
+        "properties": {
+          "age": {
+            "type": "number"
+          },
+          "distance": {
+            "description": "Fascia di distanza; manca nello swipe dell'offsite e con una trasferta",
+            "enum": [
+              "same_city",
+              "within_25",
+              "within_50",
+              "within_100",
+              "within_200",
+              "over_200"
+            ],
+            "type": "string"
+          },
+          "escalation": {
+            "description": "Presente e vero se la persona ha mandato un'escalation (D53)",
+            "type": "boolean"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "lookingFor": {
+            "description": "Codice di \"cosa cerchi\"",
+            "nullable": true,
+            "type": "object"
+          },
+          "openSpaceColleagues": {
+            "description": "Presente e vero solo tra colleghi con Open space reciproco (D168); manca negli altri casi",
+            "type": "boolean"
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/PhotoDto"
+            },
+            "type": "array"
+          },
+          "practiceArea": {
+            "description": "Codice della tassonomia degli ambiti",
+            "nullable": true,
+            "type": "object"
+          },
+          "trip": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TripPeriodDto"
+              }
+            ],
+            "description": "Trasferta del candidato (D50, D57)"
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "age",
+          "photos"
+        ],
+        "type": "object"
+      },
+      "ChangeResultDto": {
+        "properties": {
+          "latestAt": {
+            "nullable": true,
+            "type": "object"
+          },
+          "status": {
+            "description": "`pending`: vale entro due giorni; `cancelled`: annullata la modifica opposta",
+            "enum": [
+              "applied",
+              "pending",
+              "cancelled",
+              "unchanged"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "type": "object"
+      },
       "CityDto": {
         "properties": {
           "id": {
@@ -94,6 +565,101 @@
           "id",
           "name",
           "provinceCode"
+        ],
+        "type": "object"
+      },
+      "CityRefDto": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "provinceCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "provinceCode"
+        ],
+        "type": "object"
+      },
+      "CodeAppealDto": {
+        "properties": {
+          "code": {
+            "description": "Codice del collegamento ricevuto all’email personale",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "code"
+        ],
+        "type": "object"
+      },
+      "CodeDto": {
+        "properties": {
+          "code": {
+            "description": "Codice OTP di 6 cifre (D136)",
+            "example": "123456",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "type": "object"
+      },
+      "CodeLabelDto": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "label"
+        ],
+        "type": "object"
+      },
+      "CompanyDto": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "CompanyRefDto": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "description": "Solo il nome (D35)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
         ],
         "type": "object"
       },
@@ -133,21 +699,288 @@
         ],
         "type": "object"
       },
-      "ConsentDto": {
+      "ConfirmationCodeRequestDto": {
         "properties": {
-          "accepted": {
-            "description": "Consenso esplicito art. 9 (D33), casella separata",
-            "type": "boolean"
-          },
-          "textVersion": {
-            "description": "Versione del testo mostrato e accettato",
-            "example": "2026-10-01",
+          "purpose": {
+            "description": "Per che cosa si conferma l’identità con il codice all’email personale",
+            "enum": [
+              "company_change",
+              "access_change"
+            ],
             "type": "string"
           }
         },
         "required": [
+          "purpose"
+        ],
+        "type": "object"
+      },
+      "ConfirmationDto": {
+        "properties": {
+          "code": {
+            "description": "Codice OTP di 6 cifre (D136)",
+            "example": "123456",
+            "type": "string"
+          },
+          "purpose": {
+            "enum": [
+              "company_change",
+              "access_change"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "purpose"
+        ],
+        "type": "object"
+      },
+      "ConsentDto": {
+        "properties": {
+          "givenAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "revokedAt": {
+            "nullable": true,
+            "type": "object"
+          },
+          "textVersion": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "art9",
+              "terms",
+              "p7_declaration"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
           "textVersion",
-          "accepted"
+          "givenAt"
+        ],
+        "type": "object"
+      },
+      "DataExportDto": {
+        "properties": {
+          "downloadUrl": {
+            "description": "URL firmato di pochi minuti",
+            "nullable": true,
+            "type": "object"
+          },
+          "expiresAt": {
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "type": "string"
+          },
+          "readyAt": {
+            "nullable": true,
+            "type": "object"
+          },
+          "requestedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "ready",
+              "failed",
+              "expired"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "requestedAt"
+        ],
+        "type": "object"
+      },
+      "DealClosedDto": {
+        "properties": {
+          "companyName": {
+            "description": "Nome dell'azienda attuale dell'altra persona (D30)",
+            "type": "string"
+          },
+          "deadlineAt": {
+            "description": "Deadline dei 7 giorni per il primo messaggio (D62)",
+            "format": "date-time",
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "nullable": true,
+            "type": "object"
+          },
+          "matchId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "offsiteTitle": {
+            "description": "Titolo dell'offsite: \"Conosciuti all'offsite\"",
+            "nullable": true,
+            "type": "object"
+          },
+          "photo": {
+            "description": "URL firmato della foto principale",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "matchId",
+          "firstName",
+          "companyName",
+          "deadlineAt"
+        ],
+        "type": "object"
+      },
+      "DeckAnswerDto": {
+        "properties": {
+          "answer": {
+            "type": "string"
+          },
+          "question": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "question",
+          "text",
+          "answer"
+        ],
+        "type": "object"
+      },
+      "DeckOffsiteDto": {
+        "properties": {
+          "city": {
+            "description": "Città dell'offsite",
+            "type": "string"
+          },
+          "offsiteId": {
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "offsiteId",
+          "title",
+          "city",
+          "startsAt"
+        ],
+        "type": "object"
+      },
+      "DeckPhotoDto": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "thumbnailUrl": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "thumbnailUrl"
+        ],
+        "type": "object"
+      },
+      "DeckTripDto": {
+        "properties": {
+          "cityName": {
+            "description": "Città mostrata (D109)",
+            "type": "string"
+          },
+          "endDate": {
+            "type": "string"
+          },
+          "startDate": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "cityName",
+          "startDate",
+          "endDate"
+        ],
+        "type": "object"
+      },
+      "DeletionStateDto": {
+        "properties": {
+          "accessToken": {
+            "description": "Nuovo token di accesso, con l’ambito `limited`",
+            "type": "string"
+          },
+          "consentRevoked": {
+            "description": "Dalla revoca del consenso art. 9 (`consent.revoked.*`)",
+            "type": "boolean"
+          },
+          "deletionFinalAt": {
+            "description": "Cancellazione definitiva (più 7 giorni, D83)",
+            "format": "date-time",
+            "type": "string"
+          },
+          "deletionRequestedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "expiresIn": {
+            "type": "number"
+          },
+          "scope": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "deletionRequestedAt",
+          "deletionFinalAt",
+          "consentRevoked",
+          "accessToken",
+          "expiresIn",
+          "scope"
+        ],
+        "type": "object"
+      },
+      "DeviceDto": {
+        "properties": {
+          "platform": {
+            "enum": [
+              "ios",
+              "android"
+            ],
+            "type": "string"
+          },
+          "pushToken": {
+            "description": "Token di Expo Push",
+            "type": "string"
+          }
+        },
+        "required": [
+          "pushToken",
+          "platform"
         ],
         "type": "object"
       },
@@ -181,6 +1014,138 @@
         ],
         "type": "object"
       },
+      "ExcludedCompaniesDto": {
+        "properties": {
+          "changeableAt": {
+            "nullable": true,
+            "type": "object"
+          },
+          "changesRemaining": {
+            "description": "Modifiche rimaste nei 30 giorni (5, D39)",
+            "type": "number"
+          },
+          "companies": {
+            "items": {
+              "$ref": "#/components/schemas/ExcludedCompanyDto"
+            },
+            "type": "array"
+          },
+          "count": {
+            "description": "Aziende escluse più aggiunte in attesa",
+            "type": "number"
+          },
+          "immediate": {
+            "description": "In approvazione le modifiche valgono subito (D166)",
+            "type": "boolean"
+          },
+          "max": {
+            "description": "Massimo (15, D186)",
+            "type": "number"
+          },
+          "pending": {
+            "items": {
+              "$ref": "#/components/schemas/PendingChangeDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "companies",
+          "pending",
+          "count",
+          "max",
+          "changesRemaining",
+          "immediate"
+        ],
+        "type": "object"
+      },
+      "ExcludedCompaniesNoticeDto": {
+        "properties": {
+          "leftCompany": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OwnCompanyDto"
+              }
+            ],
+            "description": "Azienda lasciata, entrata nelle aziende escluse (`excluded.notice.company`)",
+            "nullable": true,
+            "type": "object"
+          },
+          "removedCurrentCompany": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/OwnCompanyDto"
+              }
+            ],
+            "description": "Nuova azienda tolta dalle aziende escluse (`excluded.removedCurrent`)",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "ExcludedCompanyDto": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "leftCompany": {
+            "description": "Azienda lasciata al cambio di lavoro (D176)",
+            "type": "boolean"
+          },
+          "name": {
+            "description": "Solo il nome (D35)",
+            "type": "string"
+          },
+          "removableFrom": {
+            "description": "Da quando si potrà togliere (7 giorni)",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "leftCompany"
+        ],
+        "type": "object"
+      },
+      "FeedDto": {
+        "properties": {
+          "backlogEmpty": {
+            "description": "\"Backlog vuoto\": stessa risposta qualunque sia il motivo (D52)",
+            "type": "boolean"
+          },
+          "cards": {
+            "items": {
+              "$ref": "#/components/schemas/CardDto"
+            },
+            "type": "array"
+          },
+          "openSpaceEnabled": {
+            "description": "Presente e vero solo con l'Open space dell'utente attivo (D157)",
+            "type": "boolean"
+          },
+          "state": {
+            "description": "Solo lo stato dell'utente stesso quando non riceve il feed (D81, D109)",
+            "enum": [
+              "incomplete",
+              "ooo",
+              "unavailable"
+            ],
+            "type": "string"
+          },
+          "todaySlides": {
+            "$ref": "#/components/schemas/TodaySlidesDto"
+          }
+        },
+        "required": [
+          "cards",
+          "backlogEmpty",
+          "todaySlides"
+        ],
+        "type": "object"
+      },
       "HealthDto": {
         "properties": {
           "status": {
@@ -190,6 +1155,228 @@
         },
         "required": [
           "status"
+        ],
+        "type": "object"
+      },
+      "InterestOptionDto": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "section": {
+            "enum": [
+              "classic",
+              "consultant"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "label",
+          "section"
+        ],
+        "type": "object"
+      },
+      "InterestsDto": {
+        "properties": {
+          "interests": {
+            "description": "Fino a 5 codici in tutto (D48)",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "interests"
+        ],
+        "type": "object"
+      },
+      "InviteCityDto": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "description": "Città mostrata (D109)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "InviteDto": {
+        "properties": {
+          "city": {
+            "$ref": "#/components/schemas/InviteCityDto"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "day": {
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "matchId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "proposedByMe": {
+            "type": "boolean"
+          },
+          "replacesId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "object"
+          },
+          "slotState": {
+            "description": "Stato dello slot dell'Agenda (D162, D233)",
+            "enum": [
+              "confirmed",
+              "awaiting_reply",
+              "to_reschedule",
+              "completed"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "accepted",
+              "declined",
+              "replaced",
+              "cancelled",
+              "expired",
+              "completed",
+              "closed"
+            ],
+            "type": "string"
+          },
+          "time": {
+            "nullable": true,
+            "type": "object"
+          },
+          "timeSlot": {
+            "enum": [
+              "morning",
+              "lunch",
+              "afternoon",
+              "evening"
+            ],
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "sync_coffee",
+              "post_review_drinks",
+              "kickoff_dinner",
+              "walk_and_talk"
+            ],
+            "type": "string"
+          },
+          "venue": {
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "matchId",
+          "proposedByMe",
+          "type",
+          "day",
+          "timeSlot",
+          "city",
+          "status",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "InviteFieldsDto": {
+        "properties": {
+          "cityId": {
+            "description": "Comune dell'elenco (D49)",
+            "example": "058091",
+            "type": "string"
+          },
+          "day": {
+            "description": "Da domani a 3 mesi (D197)",
+            "format": "date",
+            "type": "string"
+          },
+          "time": {
+            "description": "Facoltativa, dentro la fascia (D146)",
+            "example": "18:30",
+            "type": "string"
+          },
+          "timeSlot": {
+            "enum": [
+              "morning",
+              "lunch",
+              "afternoon",
+              "evening"
+            ],
+            "type": "string"
+          },
+          "type": {
+            "description": "Tipi a tema (D64)",
+            "enum": [
+              "sync_coffee",
+              "post_review_drinks",
+              "kickoff_dinner",
+              "walk_and_talk"
+            ],
+            "type": "string"
+          },
+          "venue": {
+            "description": "Nome del luogo, facoltativo; cifrato (D146, D183)",
+            "maxLength": 80,
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "day",
+          "timeSlot",
+          "cityId"
+        ],
+        "type": "object"
+      },
+      "InviteResponseDto": {
+        "properties": {
+          "answer": {
+            "description": "\"Accetto\", \"Declino con garbo\", \"Propongo un'altra data\" (D64)",
+            "enum": [
+              "accept",
+              "decline",
+              "reschedule"
+            ],
+            "type": "string"
+          },
+          "proposal": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InviteFieldsDto"
+              }
+            ],
+            "description": "Solo per \"Propongo un'altra data\""
+          }
+        },
+        "required": [
+          "answer"
         ],
         "type": "object"
       },
@@ -207,6 +1394,254 @@
         },
         "type": "object"
       },
+      "LookingForOptionDto": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "intent": {
+            "description": "Valore di fondo (D130)",
+            "enum": [
+              "long_term",
+              "dating",
+              "unsure"
+            ],
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "label",
+          "intent"
+        ],
+        "type": "object"
+      },
+      "MatchDto": {
+        "properties": {
+          "activityAt": {
+            "description": "Ultima attività, per ordinare e paginare",
+            "format": "date-time",
+            "type": "string"
+          },
+          "chatStarted": {
+            "description": "Almeno un messaggio (D107)",
+            "type": "boolean"
+          },
+          "deadlineAt": {
+            "description": "Deadline dei 7 giorni (D62)",
+            "format": "date-time",
+            "nullable": true,
+            "type": "object"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "isNew": {
+            "description": "Match non ancora visto: \"Deal Closed!\" alla prima apertura (D60)",
+            "type": "boolean"
+          },
+          "offsiteTitle": {
+            "description": "\"Conosciuti all'offsite\" con il titolo (D152)",
+            "nullable": true,
+            "type": "object"
+          },
+          "openSpaceColleagues": {
+            "description": "Solo tra colleghi con Open space reciproco (D168)",
+            "type": "boolean"
+          },
+          "person": {
+            "$ref": "#/components/schemas/MatchPersonDto"
+          },
+          "readReceipts": {
+            "description": "Conferme di lettura attive per entrambi (D63)",
+            "type": "boolean"
+          },
+          "state": {
+            "enum": [
+              "active",
+              "paused",
+              "unavailable"
+            ],
+            "type": "string"
+          },
+          "unreadCount": {
+            "description": "Messaggi dell'altra persona non letti",
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "state",
+          "activityAt"
+        ],
+        "type": "object"
+      },
+      "MatchListDto": {
+        "properties": {
+          "matches": {
+            "items": {
+              "$ref": "#/components/schemas/MatchDto"
+            },
+            "type": "array"
+          },
+          "next": {
+            "description": "Cursore della pagina successiva",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "matches"
+        ],
+        "type": "object"
+      },
+      "MatchPersonDto": {
+        "properties": {
+          "companyName": {
+            "description": "Nome dell'azienda attuale, solo nel match attivo (D30, D107)",
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "description": "Solo nel match attivo (D56)",
+            "nullable": true,
+            "type": "object"
+          },
+          "photo": {
+            "description": "URL firmato della foto principale",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "firstName"
+        ],
+        "type": "object"
+      },
+      "MatchProfileDto": {
+        "properties": {
+          "age": {
+            "type": "number"
+          },
+          "answers": {
+            "items": {
+              "$ref": "#/components/schemas/DeckAnswerDto"
+            },
+            "type": "array"
+          },
+          "bio": {
+            "nullable": true,
+            "type": "object"
+          },
+          "companyName": {
+            "description": "Nome dell'azienda attuale, mai l'identificativo (RC-63)",
+            "type": "string"
+          },
+          "distance": {
+            "description": "Fascia di distanza dal feed (D49), mai i km; manca dal match",
+            "enum": [
+              "same_city",
+              "within_25",
+              "within_50",
+              "within_100",
+              "within_200",
+              "over_200"
+            ],
+            "type": "string"
+          },
+          "escalation": {
+            "description": "Presente e vero se la persona ha mandato un'escalation (D53)",
+            "type": "boolean"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "gender": {
+            "enum": [
+              "woman",
+              "man",
+              "non_binary",
+              "undisclosed"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "interests": {
+            "items": {
+              "$ref": "#/components/schemas/InterestOptionDto"
+            },
+            "type": "array"
+          },
+          "lastName": {
+            "nullable": true,
+            "type": "object"
+          },
+          "lookingFor": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CodeLabelDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "offsites": {
+            "description": "\"Sarò all’offsite\" (D154)",
+            "items": {
+              "$ref": "#/components/schemas/DeckOffsiteDto"
+            },
+            "type": "array"
+          },
+          "openSpaceColleagues": {
+            "description": "Badge \"Open space\" (D168)",
+            "type": "boolean"
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/DeckPhotoDto"
+            },
+            "type": "array"
+          },
+          "practiceArea": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CodeLabelDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "trips": {
+            "description": "Solo nei 14 giorni prima",
+            "items": {
+              "$ref": "#/components/schemas/DeckTripDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "age",
+          "photos",
+          "interests",
+          "answers",
+          "trips",
+          "offsites",
+          "openSpaceColleagues",
+          "companyName"
+        ],
+        "type": "object"
+      },
       "MeDto": {
         "properties": {
           "company": {
@@ -216,6 +1651,15 @@
               }
             ],
             "description": "Solo la propria azienda",
+            "nullable": true,
+            "type": "object"
+          },
+          "consentRevoked": {
+            "description": "Il ripensamento viene dalla revoca del consenso art. 9",
+            "type": "boolean"
+          },
+          "deletionFinalAt": {
+            "description": "Cancellazione definitiva prevista (D83)",
             "nullable": true,
             "type": "object"
           },
@@ -229,8 +1673,42 @@
             "nullable": true,
             "type": "object"
           },
+          "excludedCompaniesNotice": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ExcludedCompaniesNoticeDto"
+              }
+            ],
+            "description": "Avviso da mostrare una volta dopo un cambio azienda (D176)",
+            "nullable": true,
+            "type": "object"
+          },
+          "firstName": {
+            "description": "Nome del profilo",
+            "nullable": true,
+            "type": "string"
+          },
           "id": {
             "type": "string"
+          },
+          "missing": {
+            "description": "Ciò che manca al profilo per entrare nel feed (D51, D109)",
+            "items": {
+              "enum": [
+                "photos",
+                "firstName",
+                "gender",
+                "interestedIn",
+                "homeCity"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "oooSince": {
+            "description": "Modalità OOO attiva da (D81)",
+            "nullable": true,
+            "type": "object"
           },
           "openSpaceEnabled": {
             "description": "Stato del proprio Open space, solo per l'utente stesso (D157)",
@@ -240,12 +1718,27 @@
             "description": "Dopo un cambio di azienda: chiedere se riattivarlo",
             "type": "boolean"
           },
+          "personalEmail": {
+            "description": "Email personale attiva (D224): solo all'utente stesso",
+            "nullable": true,
+            "type": "string"
+          },
           "registrationExpiresAt": {
             "description": "Fine dei 7 giorni per completare la registrazione",
             "nullable": true,
             "type": "object"
           },
           "reverificationDueAt": {
+            "nullable": true,
+            "type": "object"
+          },
+          "sanction": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MySanctionDto"
+              }
+            ],
+            "description": "Sanzione in corso, la più recente (D75, D113); le altre in `GET /me/sanctions`",
             "nullable": true,
             "type": "object"
           },
@@ -278,15 +1771,298 @@
               "suspended"
             ],
             "type": "string"
+          },
+          "workEmail": {
+            "description": "Email aziendale attiva, mascherata (D90, D137): solo all'utente stesso",
+            "nullable": true,
+            "type": "string"
           }
         },
         "required": [
+          "missing",
           "id",
           "status",
           "scope",
           "signInMethod",
           "openSpaceEnabled",
-          "openSpacePrompt"
+          "openSpacePrompt",
+          "consentRevoked"
+        ],
+        "type": "object"
+      },
+      "MeetingDto": {
+        "properties": {
+          "city": {
+            "$ref": "#/components/schemas/InviteCityDto"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "day": {
+            "format": "date",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "matchId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "paused": {
+            "description": "Conversazione momentaneamente sospesa (D82)",
+            "type": "boolean"
+          },
+          "person": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgendaPersonDto"
+              }
+            ],
+            "description": "Manca con la conversazione momentaneamente sospesa: lo slot resta neutro (D197)"
+          },
+          "proposedByMe": {
+            "type": "boolean"
+          },
+          "replacesId": {
+            "format": "uuid",
+            "nullable": true,
+            "type": "object"
+          },
+          "slotState": {
+            "description": "Stato dello slot dell'Agenda (D162, D233)",
+            "enum": [
+              "confirmed",
+              "awaiting_reply",
+              "to_reschedule",
+              "completed"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "accepted",
+              "declined",
+              "replaced",
+              "cancelled",
+              "expired",
+              "completed",
+              "closed"
+            ],
+            "type": "string"
+          },
+          "time": {
+            "nullable": true,
+            "type": "object"
+          },
+          "timeSlot": {
+            "enum": [
+              "morning",
+              "lunch",
+              "afternoon",
+              "evening"
+            ],
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "sync_coffee",
+              "post_review_drinks",
+              "kickoff_dinner",
+              "walk_and_talk"
+            ],
+            "type": "string"
+          },
+          "venue": {
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "matchId",
+          "proposedByMe",
+          "type",
+          "day",
+          "timeSlot",
+          "city",
+          "status",
+          "createdAt",
+          "paused"
+        ],
+        "type": "object"
+      },
+      "MessageDto": {
+        "properties": {
+          "clientMessageId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "createdAt": {
+            "description": "Ordine deciso dal server, mai dall'ora del telefono",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "mine": {
+            "description": "Vero per i messaggi scritti da chi chiede",
+            "type": "boolean"
+          },
+          "readAt": {
+            "description": "Solo sui propri messaggi e solo con le conferme di lettura attive per entrambi (D63)",
+            "format": "date-time",
+            "nullable": true,
+            "type": "object"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "clientMessageId",
+          "mine",
+          "text",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "MessagesDto": {
+        "properties": {
+          "hasMore": {
+            "description": "Ci sono messaggi più vecchi di questa pagina",
+            "type": "boolean"
+          },
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/MessageDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "messages",
+          "hasMore"
+        ],
+        "type": "object"
+      },
+      "MySanctionDto": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "appeal": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AppealStatusDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "appealDeadlineAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "explanation": {
+            "description": "Motivazione della decisione (D75); `possible_minor` per la cautelativa",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "severeCase": {
+            "nullable": true,
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "warning",
+              "disciplinary_suspension",
+              "precautionary_suspension",
+              "expulsion"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "explanation",
+          "startsAt",
+          "active"
+        ],
+        "type": "object"
+      },
+      "NewMeetingDto": {
+        "properties": {
+          "cityId": {
+            "description": "Comune dell'elenco (D49)",
+            "example": "058091",
+            "type": "string"
+          },
+          "day": {
+            "description": "Da domani a 3 mesi (D197)",
+            "format": "date",
+            "type": "string"
+          },
+          "matchId": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "time": {
+            "description": "Facoltativa, dentro la fascia (D146)",
+            "example": "18:30",
+            "type": "string"
+          },
+          "timeSlot": {
+            "enum": [
+              "morning",
+              "lunch",
+              "afternoon",
+              "evening"
+            ],
+            "type": "string"
+          },
+          "type": {
+            "description": "Tipi a tema (D64)",
+            "enum": [
+              "sync_coffee",
+              "post_review_drinks",
+              "kickoff_dinner",
+              "walk_and_talk"
+            ],
+            "type": "string"
+          },
+          "venue": {
+            "description": "Nome del luogo, facoltativo; cifrato (D146, D183)",
+            "maxLength": 80,
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "day",
+          "timeSlot",
+          "cityId",
+          "matchId"
         ],
         "type": "object"
       },
@@ -304,6 +2080,201 @@
         "required": [
           "nonce",
           "expiresAt"
+        ],
+        "type": "object"
+      },
+      "NotificationPreferencesDto": {
+        "properties": {
+          "disabledTypes": {
+            "description": "Tipi spenti; l'esito dell'approvazione arriva sempre (D197)",
+            "items": {
+              "enum": [
+                "new_match",
+                "new_message",
+                "escalation",
+                "invite",
+                "match_expiry",
+                "reverification",
+                "ooo_reminder",
+                "offsite"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "previews": {
+            "description": "Anteprime: nome di battesimo e inizio del messaggio, spente di base",
+            "type": "boolean"
+          },
+          "quietHours": {
+            "description": "Fasce di ogni giorno, ora italiana",
+            "items": {
+              "$ref": "#/components/schemas/QuietRangeDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "disabledTypes",
+          "previews",
+          "quietHours"
+        ],
+        "type": "object"
+      },
+      "OffsiteDetailDto": {
+        "properties": {
+          "attendeesRounded": {
+            "description": "Iscritti arrotondati (D167): 0 vuol dire \"meno di 10\", poi la decina per difetto; mai il numero esatto",
+            "type": "number"
+          },
+          "attending": {
+            "type": "boolean"
+          },
+          "city": {
+            "type": "string"
+          },
+          "coverUrl": {
+            "description": "URL della copertina",
+            "nullable": true,
+            "type": "object"
+          },
+          "description": {
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "full": {
+            "description": "\"Al completo\"",
+            "type": "boolean"
+          },
+          "highlighted": {
+            "description": "Nella città base o nelle città delle proprie trasferte",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "showOnProfile": {
+            "description": "Riga \"sarò all'offsite\" nel profilo (D154), spenta di base",
+            "type": "boolean"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "published",
+              "cancelled",
+              "completed"
+            ],
+            "type": "string"
+          },
+          "swipeClosesAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "object"
+          },
+          "swipeOpen": {
+            "description": "Swipe dell'offsite aperto: iscritto, fino a 24 ore dopo la fine (D152)",
+            "type": "boolean"
+          },
+          "title": {
+            "type": "string"
+          },
+          "venueAddress": {
+            "type": "string"
+          },
+          "venueName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "startsAt",
+          "endsAt",
+          "city",
+          "venueName",
+          "attendeesRounded",
+          "attending",
+          "full",
+          "status",
+          "highlighted",
+          "description",
+          "venueAddress",
+          "showOnProfile",
+          "swipeOpen"
+        ],
+        "type": "object"
+      },
+      "OffsiteSummaryDto": {
+        "properties": {
+          "attendeesRounded": {
+            "description": "Iscritti arrotondati (D167): 0 vuol dire \"meno di 10\", poi la decina per difetto; mai il numero esatto",
+            "type": "number"
+          },
+          "attending": {
+            "type": "boolean"
+          },
+          "city": {
+            "type": "string"
+          },
+          "coverUrl": {
+            "description": "URL della copertina",
+            "nullable": true,
+            "type": "object"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "full": {
+            "description": "\"Al completo\"",
+            "type": "boolean"
+          },
+          "highlighted": {
+            "description": "Nella città base o nelle città delle proprie trasferte",
+            "type": "boolean"
+          },
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "published",
+              "cancelled",
+              "completed"
+            ],
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "venueName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "startsAt",
+          "endsAt",
+          "city",
+          "venueName",
+          "attendeesRounded",
+          "attending",
+          "full",
+          "status",
+          "highlighted"
         ],
         "type": "object"
       },
@@ -325,6 +2296,77 @@
         ],
         "type": "object"
       },
+      "OpenSpaceFiltersDto": {
+        "properties": {
+          "blockedPeople": {
+            "description": "Persone bloccate dall’utente",
+            "type": "number"
+          },
+          "excludedCompanies": {
+            "description": "Proprie aziende escluse, anche in attesa (D157)",
+            "type": "number"
+          }
+        },
+        "required": [
+          "excludedCompanies",
+          "blockedPeople"
+        ],
+        "type": "object"
+      },
+      "OpenSpaceStatusDto": {
+        "properties": {
+          "changeableAt": {
+            "description": "Solo oltre il limite",
+            "nullable": true,
+            "type": "object"
+          },
+          "changesRemaining": {
+            "description": "Attivazioni rimaste nei 30 giorni",
+            "type": "number"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "filters": {
+            "$ref": "#/components/schemas/OpenSpaceFiltersDto"
+          },
+          "maxChanges": {
+            "type": "number"
+          },
+          "prompt": {
+            "description": "Dopo un cambio di azienda: chiedere se riattivarlo",
+            "type": "boolean"
+          },
+          "since": {
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "enabled",
+          "prompt",
+          "changesRemaining",
+          "maxChanges",
+          "filters"
+        ],
+        "type": "object"
+      },
+      "OpenSpaceUpdateDto": {
+        "properties": {
+          "enabled": {
+            "description": "\"Attiva l'open space\" (vero) o \"Spegni l'open space\" (falso)",
+            "type": "boolean"
+          },
+          "textVersion": {
+            "description": "Versione dei testi della schermata di conferma, obbligatoria per attivare",
+            "type": "string"
+          }
+        },
+        "required": [
+          "enabled"
+        ],
+        "type": "object"
+      },
       "OwnCompanyDto": {
         "properties": {
           "id": {
@@ -337,6 +2379,311 @@
         "required": [
           "id",
           "name"
+        ],
+        "type": "object"
+      },
+      "OwnPhotoDto": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "position": {
+            "description": "Ordine da 1 a 6; la prima è la principale",
+            "type": "number"
+          },
+          "status": {
+            "description": "Visibile agli altri solo `approved` (D143); le altre solo all’utente",
+            "enum": [
+              "uploading",
+              "checking",
+              "pending_approval",
+              "approved",
+              "under_review",
+              "rejected"
+            ],
+            "type": "string"
+          },
+          "thumbnailUrl": {
+            "nullable": true,
+            "type": "object"
+          },
+          "url": {
+            "description": "URL firmato di pochi minuti",
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "position",
+          "status"
+        ],
+        "type": "object"
+      },
+      "OwnProfileDto": {
+        "properties": {
+          "age": {
+            "type": "number"
+          },
+          "answers": {
+            "items": {
+              "$ref": "#/components/schemas/AnswerDto"
+            },
+            "type": "array"
+          },
+          "bio": {
+            "nullable": true,
+            "type": "object"
+          },
+          "birthDate": {
+            "description": "Solo per l’utente stesso; si corregge solo dal Supporto (D112)",
+            "type": "string"
+          },
+          "firstName": {
+            "nullable": true,
+            "type": "object"
+          },
+          "gender": {
+            "enum": [
+              "woman",
+              "man",
+              "non_binary",
+              "undisclosed"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "homeCity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CityRefDto"
+              }
+            ],
+            "description": "Mai mostrata agli altri",
+            "nullable": true,
+            "type": "object"
+          },
+          "homeCityChangeableAt": {
+            "description": "Solo oltre il limite: da quando si potrà cambiare la città base",
+            "nullable": true,
+            "type": "object"
+          },
+          "interestedIn": {
+            "description": "Mai mostrato (D47)",
+            "enum": [
+              "men",
+              "women",
+              "everyone"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "interests": {
+            "description": "Codici degli interessi",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "isComplete": {
+            "description": "Profilo completo (D51)",
+            "type": "boolean"
+          },
+          "lastName": {
+            "description": "Lo vede solo la persona del match (D56)",
+            "nullable": true,
+            "type": "object"
+          },
+          "lookingFor": {
+            "description": "Codice di \"cosa cerchi\"",
+            "nullable": true,
+            "type": "object"
+          },
+          "missing": {
+            "description": "Cosa manca per il profilo completo",
+            "items": {
+              "enum": [
+                "photos",
+                "firstName",
+                "gender",
+                "interestedIn",
+                "homeCity"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "oooSince": {
+            "description": "Modalità OOO attiva da (D81)",
+            "nullable": true,
+            "type": "object"
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/OwnPhotoDto"
+            },
+            "type": "array"
+          },
+          "practiceArea": {
+            "description": "Codice dell’ambito",
+            "nullable": true,
+            "type": "object"
+          },
+          "preferences": {
+            "$ref": "#/components/schemas/PreferencesDto"
+          },
+          "readReceipts": {
+            "description": "Conferme di lettura (D63)",
+            "type": "boolean"
+          },
+          "showCalendar": {
+            "description": "\"Mostra il calendario nel profilo\" (D109)",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "birthDate",
+          "age",
+          "preferences",
+          "showCalendar",
+          "readReceipts",
+          "isComplete",
+          "missing",
+          "interests",
+          "answers",
+          "photos"
+        ],
+        "type": "object"
+      },
+      "PendingChangeDto": {
+        "properties": {
+          "company": {
+            "$ref": "#/components/schemas/CompanyRefDto"
+          },
+          "id": {
+            "type": "string"
+          },
+          "latestAt": {
+            "description": "\"Entro due giorni\": data massima, mai quella esatta (D36)",
+            "format": "date-time",
+            "type": "string"
+          },
+          "operation": {
+            "enum": [
+              "add",
+              "remove"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "company",
+          "operation",
+          "latestAt"
+        ],
+        "type": "object"
+      },
+      "PersonalEmailVerifyDto": {
+        "properties": {
+          "email": {
+            "description": "Normalizzata dal backend (RC-04)",
+            "example": "nome@esempio.it",
+            "maxLength": 254,
+            "type": "string"
+          },
+          "newCode": {
+            "description": "Codice inviato alla nuova email personale",
+            "type": "string"
+          },
+          "oldCode": {
+            "description": "Codice inviato all’email personale di adesso",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "oldCode",
+          "newCode"
+        ],
+        "type": "object"
+      },
+      "PhotoDto": {
+        "properties": {
+          "id": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "thumbnailUrl": {
+            "description": "URL firmato della miniatura",
+            "type": "string"
+          },
+          "url": {
+            "description": "URL firmato di breve durata, emesso dopo il controllo della regola",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "thumbnailUrl"
+        ],
+        "type": "object"
+      },
+      "PhotoOrderDto": {
+        "properties": {
+          "photoIds": {
+            "description": "Identificativi nel nuovo ordine",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "photoIds"
+        ],
+        "type": "object"
+      },
+      "PhotoUploadDto": {
+        "properties": {
+          "photo": {
+            "$ref": "#/components/schemas/OwnPhotoDto"
+          },
+          "upload": {
+            "$ref": "#/components/schemas/SignedUploadDto"
+          }
+        },
+        "required": [
+          "photo",
+          "upload"
+        ],
+        "type": "object"
+      },
+      "PreferencesDto": {
+        "properties": {
+          "ageMax": {
+            "type": "number"
+          },
+          "ageMin": {
+            "type": "number"
+          },
+          "maxDistance": {
+            "enum": [
+              "city",
+              "km25",
+              "km50",
+              "km100",
+              "km200",
+              "italy"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "ageMin",
+          "ageMax",
+          "maxDistance"
         ],
         "type": "object"
       },
@@ -353,6 +2700,212 @@
         },
         "required": [
           "companyIds"
+        ],
+        "type": "object"
+      },
+      "ProfileDeckDto": {
+        "properties": {
+          "age": {
+            "type": "number"
+          },
+          "answers": {
+            "items": {
+              "$ref": "#/components/schemas/DeckAnswerDto"
+            },
+            "type": "array"
+          },
+          "bio": {
+            "nullable": true,
+            "type": "object"
+          },
+          "distance": {
+            "description": "Fascia di distanza dal feed (D49), mai i km; manca dal match",
+            "enum": [
+              "same_city",
+              "within_25",
+              "within_50",
+              "within_100",
+              "within_200",
+              "over_200"
+            ],
+            "type": "string"
+          },
+          "escalation": {
+            "description": "Presente e vero se la persona ha mandato un'escalation (D53)",
+            "type": "boolean"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "gender": {
+            "enum": [
+              "woman",
+              "man",
+              "non_binary",
+              "undisclosed"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "interests": {
+            "items": {
+              "$ref": "#/components/schemas/InterestOptionDto"
+            },
+            "type": "array"
+          },
+          "lookingFor": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CodeLabelDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "offsites": {
+            "description": "\"Sarò all’offsite\" (D154)",
+            "items": {
+              "$ref": "#/components/schemas/DeckOffsiteDto"
+            },
+            "type": "array"
+          },
+          "openSpaceColleagues": {
+            "description": "Badge \"Open space\" (D168)",
+            "type": "boolean"
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/DeckPhotoDto"
+            },
+            "type": "array"
+          },
+          "practiceArea": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CodeLabelDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "trips": {
+            "description": "Solo nei 14 giorni prima",
+            "items": {
+              "$ref": "#/components/schemas/DeckTripDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "age",
+          "photos",
+          "interests",
+          "answers",
+          "trips",
+          "offsites",
+          "openSpaceColleagues"
+        ],
+        "type": "object"
+      },
+      "ProfilePatchDto": {
+        "properties": {
+          "ageMax": {
+            "maximum": 99,
+            "minimum": 18,
+            "type": "number"
+          },
+          "ageMin": {
+            "maximum": 99,
+            "minimum": 18,
+            "type": "number"
+          },
+          "bio": {
+            "description": "Fino a 300 caratteri (D48)",
+            "nullable": true,
+            "type": "object"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "gender": {
+            "enum": [
+              "woman",
+              "man",
+              "non_binary",
+              "undisclosed"
+            ],
+            "type": "string"
+          },
+          "homeCityId": {
+            "description": "Codice ISTAT del comune",
+            "type": "string"
+          },
+          "interestedIn": {
+            "enum": [
+              "men",
+              "women",
+              "everyone"
+            ],
+            "type": "string"
+          },
+          "lastName": {
+            "nullable": true,
+            "type": "object"
+          },
+          "lookingFor": {
+            "nullable": true,
+            "type": "object"
+          },
+          "maxDistance": {
+            "enum": [
+              "city",
+              "km25",
+              "km50",
+              "km100",
+              "km200",
+              "italy"
+            ],
+            "type": "string"
+          },
+          "ooo": {
+            "description": "\"Vai in OOO\" (vero) e \"Torna operativo\" (falso), D81",
+            "type": "boolean"
+          },
+          "practiceArea": {
+            "nullable": true,
+            "type": "object"
+          },
+          "readReceipts": {
+            "type": "boolean"
+          },
+          "showCalendar": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "ProfileQuestionDto": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "text": {
+            "description": "Testo della domanda a tema",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "label",
+          "text"
         ],
         "type": "object"
       },
@@ -375,6 +2928,52 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "QuietRangeDto": {
+        "properties": {
+          "end": {
+            "description": "Può passare la mezzanotte (D233)",
+            "example": "07:00",
+            "type": "string"
+          },
+          "start": {
+            "example": "22:00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "start",
+          "end"
+        ],
+        "type": "object"
+      },
+      "ReadBodyDto": {
+        "properties": {
+          "messageId": {
+            "description": "Ultimo messaggio letto dell'altra persona",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "messageId"
+        ],
+        "type": "object"
+      },
+      "ReceivedDto": {
+        "properties": {
+          "status": {
+            "description": "Conferma neutra, uguale per ogni motivo",
+            "enum": [
+              "received"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
         "type": "object"
       },
       "RefreshDto": {
@@ -494,6 +3093,163 @@
         ],
         "type": "object"
       },
+      "ReportDto": {
+        "properties": {
+          "containsThreats": {
+            "description": "Contiene minacce o contenuti illegali: esame entro 24 ore",
+            "type": "boolean"
+          },
+          "matchId": {
+            "description": "Match da cui si segnala (anche chiuso da meno di 30 giorni)",
+            "type": "string"
+          },
+          "messageIds": {
+            "description": "Messaggi della chat da allegare (solo di quel match)",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "reason": {
+            "description": "Motivi di D71",
+            "enum": [
+              "fake_profile",
+              "inappropriate_photos",
+              "harassment",
+              "spam_scam",
+              "possible_minor",
+              "works_at_my_company",
+              "other"
+            ],
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "feed",
+              "match",
+              "chat"
+            ],
+            "type": "string"
+          },
+          "text": {
+            "description": "Testo breve, obbligatorio per \"altro\"",
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "userId": {
+            "description": "Persona segnalata",
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId",
+          "reason",
+          "source"
+        ],
+        "type": "object"
+      },
+      "ReportOutcomeDto": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "reviewedAt": {
+            "description": "Esito generico (D113): l’app mostra sempre lo stesso testo",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "ResubmissionDto": {
+        "properties": {
+          "attempt": {
+            "type": "number"
+          },
+          "dueAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "attempt",
+          "dueAt"
+        ],
+        "type": "object"
+      },
+      "RollbackBodyDto": {
+        "properties": {
+          "userId": {
+            "description": "La persona dell'ultimo swipe del giorno",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId"
+        ],
+        "type": "object"
+      },
+      "RollbackResultDto": {
+        "properties": {
+          "todaySlides": {
+            "$ref": "#/components/schemas/TodaySlidesDto"
+          }
+        },
+        "required": [
+          "todaySlides"
+        ],
+        "type": "object"
+      },
+      "SendMessageDto": {
+        "properties": {
+          "clientMessageId": {
+            "description": "Generato dall'app: un nuovo tentativo non crea doppioni (D231)",
+            "format": "uuid",
+            "type": "string"
+          },
+          "text": {
+            "description": "Solo testo ed emoji (D63)",
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "clientMessageId"
+        ],
+        "type": "object"
+      },
+      "SentMessageDto": {
+        "properties": {
+          "bonusAwarded": {
+            "description": "Primo messaggio del match: 3 slide in più a chi scrive (D62)",
+            "type": "boolean"
+          },
+          "message": {
+            "$ref": "#/components/schemas/MessageDto"
+          },
+          "todaySlides": {
+            "$ref": "#/components/schemas/TodaySlidesDto"
+          }
+        },
+        "required": [
+          "message",
+          "bonusAwarded",
+          "todaySlides"
+        ],
+        "type": "object"
+      },
       "SessionDto": {
         "properties": {
           "accessToken": {
@@ -526,6 +3282,35 @@
         ],
         "type": "object"
       },
+      "SignedUploadDto": {
+        "properties": {
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "maxBytes": {
+            "description": "Dimensione massima del file in byte",
+            "type": "number"
+          },
+          "method": {
+            "enum": [
+              "PUT"
+            ],
+            "type": "string"
+          },
+          "url": {
+            "description": "URL firmato per caricare il file con PUT, valido 10 minuti",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "method",
+          "expiresAt",
+          "maxBytes"
+        ],
+        "type": "object"
+      },
       "SignInResultDto": {
         "properties": {
           "registrationTicket": {
@@ -550,6 +3335,311 @@
         ],
         "type": "object"
       },
+      "SuggestionDto": {
+        "properties": {
+          "city": {
+            "$ref": "#/components/schemas/InviteCityDto"
+          },
+          "day": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "day",
+          "city"
+        ],
+        "type": "object"
+      },
+      "SwipeBodyDto": {
+        "properties": {
+          "offsiteId": {
+            "description": "Swipe dell'offsite (D152)",
+            "format": "uuid",
+            "type": "string"
+          },
+          "type": {
+            "description": "Approvato, Fuori scope, Escalation (D53)",
+            "enum": [
+              "like",
+              "pass",
+              "escalation"
+            ],
+            "type": "string"
+          },
+          "userId": {
+            "description": "L'altra persona",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId",
+          "type"
+        ],
+        "type": "object"
+      },
+      "SwipeResultDto": {
+        "properties": {
+          "match": {
+            "$ref": "#/components/schemas/DealClosedDto"
+          },
+          "matched": {
+            "type": "boolean"
+          },
+          "todaySlides": {
+            "$ref": "#/components/schemas/TodaySlidesDto"
+          }
+        },
+        "required": [
+          "matched",
+          "todaySlides"
+        ],
+        "type": "object"
+      },
+      "TabsDto": {
+        "properties": {
+          "agendaDot": {
+            "description": "Proposta di meeting dell'altra persona non ancora vista, senza numeri (D145)",
+            "type": "boolean"
+          },
+          "newMatches": {
+            "description": "Match nuovi non ancora visti (punto della scheda Match)",
+            "type": "boolean"
+          },
+          "unreadMessages": {
+            "description": "Messaggi non letti nei match attivi",
+            "type": "number"
+          }
+        },
+        "required": [
+          "unreadMessages",
+          "newMatches",
+          "agendaDot"
+        ],
+        "type": "object"
+      },
+      "TaxonomiesDto": {
+        "properties": {
+          "interests": {
+            "items": {
+              "$ref": "#/components/schemas/InterestOptionDto"
+            },
+            "type": "array"
+          },
+          "lookingFor": {
+            "items": {
+              "$ref": "#/components/schemas/LookingForOptionDto"
+            },
+            "type": "array"
+          },
+          "practiceAreas": {
+            "items": {
+              "$ref": "#/components/schemas/CodeLabelDto"
+            },
+            "type": "array"
+          },
+          "profileQuestions": {
+            "items": {
+              "$ref": "#/components/schemas/ProfileQuestionDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "lookingFor",
+          "interests",
+          "practiceAreas",
+          "profileQuestions"
+        ],
+        "type": "object"
+      },
+      "TodaySlidesDto": {
+        "properties": {
+          "escalationsRemaining": {
+            "type": "number"
+          },
+          "remaining": {
+            "description": "Slide (like) rimaste oggi, bonus compresi (D136, D177)",
+            "type": "number"
+          },
+          "total": {
+            "description": "25 più 3 per ogni bonus ricevuto oggi (D54, D62)",
+            "type": "number"
+          }
+        },
+        "required": [
+          "remaining",
+          "total",
+          "escalationsRemaining"
+        ],
+        "type": "object"
+      },
+      "TripDto": {
+        "properties": {
+          "city": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CityRefDto"
+              }
+            ],
+            "description": "Comune scelto, con il nome reale (solo per sé)"
+          },
+          "endDate": {
+            "example": "2026-11-06",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "startDate": {
+            "example": "2026-11-02",
+            "type": "string"
+          },
+          "visibleFrom": {
+            "description": "Primo giorno in cui si compare nella città: 14 giorni prima (D57)",
+            "type": "string"
+          },
+          "visibleNow": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "city",
+          "startDate",
+          "endDate",
+          "visibleFrom",
+          "visibleNow"
+        ],
+        "type": "object"
+      },
+      "TripInputDto": {
+        "properties": {
+          "cityId": {
+            "description": "Codice ISTAT del comune di destinazione",
+            "type": "string"
+          },
+          "endDate": {
+            "description": "Ultimo giorno, compreso",
+            "example": "2026-11-06",
+            "type": "string"
+          },
+          "startDate": {
+            "description": "Primo giorno",
+            "example": "2026-11-02",
+            "type": "string"
+          }
+        },
+        "required": [
+          "cityId",
+          "startDate",
+          "endDate"
+        ],
+        "type": "object"
+      },
+      "TripPeriodDto": {
+        "properties": {
+          "city": {
+            "description": "Città mostrata della trasferta (D109), mai il comune piccolo",
+            "type": "string"
+          },
+          "from": {
+            "format": "date",
+            "type": "string"
+          },
+          "to": {
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "city",
+          "from",
+          "to"
+        ],
+        "type": "object"
+      },
+      "TripsDto": {
+        "properties": {
+          "creatableAt": {
+            "description": "Solo oltre il limite di frequenza: da quando se ne potrà aggiungere una",
+            "nullable": true,
+            "type": "object"
+          },
+          "max": {
+            "description": "Massimo delle trasferte pianificate (5, D57)",
+            "type": "number"
+          },
+          "showCalendar": {
+            "description": "\"Mostra il calendario nel profilo\" (D109)",
+            "type": "boolean"
+          },
+          "trips": {
+            "items": {
+              "$ref": "#/components/schemas/TripDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "trips",
+          "max",
+          "showCalendar"
+        ],
+        "type": "object"
+      },
+      "UpcomingDto": {
+        "properties": {
+          "meetings": {
+            "items": {
+              "$ref": "#/components/schemas/MeetingDto"
+            },
+            "type": "array"
+          },
+          "next": {
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "meetings"
+        ],
+        "type": "object"
+      },
+      "UploadConfirmationDto": {
+        "properties": {
+          "key": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key"
+        ],
+        "type": "object"
+      },
+      "UploadUrlDto": {
+        "properties": {
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "key": {
+            "description": "Da inviare alla conferma del caricamento",
+            "type": "string"
+          },
+          "uploadUrl": {
+            "description": "URL firmato per caricare il documento (PUT), pochi minuti",
+            "type": "string"
+          }
+        },
+        "required": [
+          "uploadUrl",
+          "expiresAt",
+          "key"
+        ],
+        "type": "object"
+      },
       "VerifyCodeDto": {
         "properties": {
           "code": {
@@ -567,6 +3657,75 @@
         "required": [
           "email",
           "code"
+        ],
+        "type": "object"
+      },
+      "WaitlistRequestDto": {
+        "properties": {
+          "contactEmail": {
+            "description": "Email di contatto, meglio la personale (P13)",
+            "type": "string"
+          },
+          "domain": {
+            "description": "Dominio dell’email aziendale",
+            "example": "studio-esempio.it",
+            "type": "string"
+          },
+          "suggestedName": {
+            "maxLength": 120,
+            "type": "string"
+          }
+        },
+        "required": [
+          "domain",
+          "contactEmail"
+        ],
+        "type": "object"
+      },
+      "WaitlistVerificationDto": {
+        "properties": {
+          "code": {
+            "example": "123456",
+            "type": "string"
+          },
+          "contactEmail": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "contactEmail",
+          "code"
+        ],
+        "type": "object"
+      },
+      "WebDeletionAcceptedDto": {
+        "properties": {
+          "status": {
+            "description": "Risposta uguale per ogni indirizzo: il codice va all’email personale (D83)",
+            "example": "sent",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "type": "object"
+      },
+      "WebDeletionResultDto": {
+        "properties": {
+          "deletionFinalAt": {
+            "description": "Cancellazione definitiva, annullabile accedendo all’app",
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "example": "requested",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "deletionFinalAt"
         ],
         "type": "object"
       },
@@ -593,31 +3752,79 @@
         ],
         "type": "object"
       },
+      "WorkEmailResultDto": {
+        "properties": {
+          "accessToken": {
+            "description": "Nuovo token di accesso con l’ambito aggiornato",
+            "type": "string"
+          },
+          "company": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CompanyDto"
+              }
+            ],
+            "description": "La propria azienda attuale"
+          },
+          "expiresIn": {
+            "type": "number"
+          },
+          "leftCompanyExcluded": {
+            "description": "L’azienda lasciata è entrata nelle aziende escluse (D176)",
+            "type": "boolean"
+          },
+          "newCompanyUnexcluded": {
+            "description": "La nuova azienda è uscita dalle aziende escluse (D158)",
+            "type": "boolean"
+          },
+          "openSpacePrompt": {
+            "description": "Chiedere se riattivare l’open space (D197)",
+            "type": "boolean"
+          },
+          "result": {
+            "enum": [
+              "sameCompany",
+              "changed"
+            ],
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "result",
+          "company",
+          "openSpacePrompt",
+          "leftCompanyExcluded",
+          "newCompanyUnexcluded",
+          "accessToken",
+          "expiresIn",
+          "scope"
+        ],
+        "type": "object"
+      },
       "WorkEmailVerifyDto": {
         "properties": {
           "code": {
             "example": "123456",
             "type": "string"
           },
-          "declarationAccepted": {
-            "description": "Dichiarazione P7 (D136), casella non preselezionata",
-            "type": "boolean"
-          },
           "declarationVersion": {
-            "example": "2026-10-01",
+            "description": "Versione del testo della dichiarazione P7 accettata (D136)",
             "type": "string"
           },
           "email": {
             "description": "Normalizzata dal backend (RC-04)",
-            "example": "nome.cognome@azienda.it",
+            "example": "nome@esempio.it",
+            "maxLength": 254,
             "type": "string"
           }
         },
         "required": [
           "email",
-          "declarationAccepted",
-          "declarationVersion",
-          "code"
+          "code",
+          "declarationVersion"
         ],
         "type": "object"
       }
@@ -638,6 +3845,200 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/agenda": {
+      "get": {
+        "operationId": "AgendaController_range",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "from",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Al massimo 6 settimane dopo `from`",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "format": "date",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgendaDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "agenda"
+        ]
+      }
+    },
+    "/agenda/meetings": {
+      "post": {
+        "operationId": "AgendaController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewMeetingDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "agenda"
+        ]
+      }
+    },
+    "/agenda/people": {
+      "get": {
+        "operationId": "AgendaController_people",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AgendaPeopleItemDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "agenda"
+        ]
+      }
+    },
+    "/agenda/upcoming": {
+      "get": {
+        "operationId": "AgendaController_upcoming",
+        "parameters": [
+          {
+            "description": "Cursore di `next`",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpcomingDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "agenda"
+        ]
+      }
+    },
+    "/appeals": {
+      "post": {
+        "operationId": "SafetyController_appealWithCode",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodeAppealDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceivedDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "safety"
+        ]
+      }
+    },
     "/auth/apple": {
       "post": {
         "operationId": "AuthController_apple",
@@ -662,6 +4063,30 @@
               }
             },
             "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/apple/web-callback": {
+      "post": {
+        "operationId": "AppleWebCallbackController_callback",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "$ref": "#/components/schemas/AppleFormPostDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "303": {
+            "description": "Reindirizzamento all'app con il token nel frammento"
           }
         },
         "tags": [
@@ -843,6 +4268,90 @@
         ]
       }
     },
+    "/blocks": {
+      "get": {
+        "operationId": "PrivacyController_blocked",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/BlockedPersonDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "privacy"
+        ]
+      },
+      "post": {
+        "operationId": "PrivacyController_block",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BlockDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "privacy"
+        ]
+      }
+    },
+    "/blocks/{userId}": {
+      "delete": {
+        "operationId": "PrivacyController_unblock",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "privacy"
+        ]
+      }
+    },
     "/cities": {
       "get": {
         "operationId": "DirectoryController_cities",
@@ -921,6 +4430,45 @@
         ]
       }
     },
+    "/feed": {
+      "get": {
+        "operationId": "FeedController_get",
+        "parameters": [
+          {
+            "description": "\"In trasferta nella mia città\" (D52)",
+            "in": "query",
+            "name": "filter",
+            "required": false,
+            "schema": {
+              "enum": [
+                "trips"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "feed"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "operationId": "HealthController_health",
@@ -939,6 +4487,805 @@
         },
         "tags": [
           "health"
+        ]
+      }
+    },
+    "/identity/company-change/work-email": {
+      "post": {
+        "operationId": "AccountController_companyChangeCode",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/identity/company-change/work-email/verify": {
+      "post": {
+        "operationId": "AccountController_companyChange",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkEmailVerifyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkEmailResultDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/identity/confirmation": {
+      "post": {
+        "operationId": "AccountController_confirm",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/identity/confirmation/code": {
+      "post": {
+        "operationId": "AccountController_confirmationCode",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmationCodeRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/identity/restore/work-email": {
+      "post": {
+        "operationId": "AccountController_restoreCode",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/identity/restore/work-email/verify": {
+      "post": {
+        "operationId": "AccountController_restore",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkEmailVerifyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkEmailResultDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/identity/reverification/code": {
+      "post": {
+        "operationId": "AccountController_reverificationCode",
+        "parameters": [],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/identity/reverification/verify": {
+      "post": {
+        "operationId": "AccountController_reverify",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessTokenDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/matches": {
+      "get": {
+        "operationId": "MatchesController_list",
+        "parameters": [
+          {
+            "description": "Cursore di `next`",
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchListDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "matches"
+        ]
+      }
+    },
+    "/matches/{id}": {
+      "get": {
+        "operationId": "MatchesController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "matches"
+        ]
+      }
+    },
+    "/matches/{id}/close": {
+      "post": {
+        "operationId": "MatchesController_close",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "matches"
+        ]
+      }
+    },
+    "/matches/{id}/invites": {
+      "get": {
+        "operationId": "InvitesController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/InviteDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "invites"
+        ]
+      },
+      "post": {
+        "operationId": "InvitesController_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteFieldsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "invites"
+        ]
+      }
+    },
+    "/matches/{id}/invites/{inviteId}": {
+      "delete": {
+        "operationId": "InvitesController_cancel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "inviteId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "invites"
+        ]
+      }
+    },
+    "/matches/{id}/invites/{inviteId}/response": {
+      "post": {
+        "operationId": "InvitesController_respond",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "inviteId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteResponseDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InviteDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "invites"
+        ]
+      }
+    },
+    "/matches/{id}/invites/suggestions": {
+      "get": {
+        "operationId": "InvitesController_suggestions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SuggestionDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "invites"
+        ]
+      }
+    },
+    "/matches/{id}/messages": {
+      "get": {
+        "operationId": "ChatController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Messaggi successivi a questo (ripresa, D231)",
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Messaggi precedenti a questo (pagine indietro)",
+            "in": "query",
+            "name": "before",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessagesDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "chat"
+        ]
+      },
+      "post": {
+        "operationId": "ChatController_send",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendMessageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SentMessageDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "chat"
+        ]
+      }
+    },
+    "/matches/{id}/profile": {
+      "get": {
+        "operationId": "MatchesController_profile",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MatchProfileDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "matches"
+        ]
+      }
+    },
+    "/matches/{id}/reads": {
+      "post": {
+        "operationId": "ChatController_read",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReadBodyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "chat"
+        ]
+      }
+    },
+    "/matches/{id}/seen": {
+      "post": {
+        "operationId": "MatchesController_seen",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "matches"
         ]
       }
     },
@@ -968,6 +5315,219 @@
         ]
       }
     },
+    "/me/access": {
+      "get": {
+        "operationId": "AccountController_accessInfo",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessInfoDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      },
+      "put": {
+        "operationId": "AccountController_setAccess",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccessUpdateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessInfoDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/me/access/method": {
+      "put": {
+        "operationId": "AccountController_changeMethod",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccessMethodDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessInfoDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/me/access/method/email-code": {
+      "post": {
+        "operationId": "AccountController_methodEmailCode",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/me/age-verification": {
+      "get": {
+        "operationId": "SafetyController_ageVerificationStatus",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgeVerificationStatusDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "safety"
+        ]
+      }
+    },
+    "/me/age-verification/upload": {
+      "post": {
+        "operationId": "SafetyController_ageVerificationUpload",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadUrlDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "safety"
+        ]
+      }
+    },
+    "/me/age-verification/upload/confirmation": {
+      "post": {
+        "operationId": "SafetyController_ageVerificationConfirm",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadConfirmationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "safety"
+        ]
+      }
+    },
     "/me/approval": {
       "get": {
         "operationId": "MeController_approval",
@@ -991,6 +5551,1331 @@
         ],
         "tags": [
           "me"
+        ]
+      }
+    },
+    "/me/approval/appeal": {
+      "post": {
+        "operationId": "SafetyController_approvalAppeal",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppealDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceivedDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "safety"
+        ]
+      }
+    },
+    "/me/approval/resubmission": {
+      "post": {
+        "operationId": "SafetyController_resubmit",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResubmissionDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "safety"
+        ]
+      }
+    },
+    "/me/consents": {
+      "get": {
+        "operationId": "AccountController_consents",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ConsentDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/me/consents/art9/revocation": {
+      "post": {
+        "operationId": "AccountController_revokeConsent",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletionStateDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/me/deletion": {
+      "delete": {
+        "operationId": "AccountController_cancelDeletion",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessTokenDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      },
+      "post": {
+        "operationId": "AccountController_requestDeletion",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletionStateDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/me/deletion/code": {
+      "post": {
+        "operationId": "AccountController_deletionCode",
+        "parameters": [],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/me/devices/{installationId}": {
+      "delete": {
+        "operationId": "NotificationsController_removeDevice",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "installationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      },
+      "put": {
+        "operationId": "NotificationsController_device",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "installationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeviceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/me/exports": {
+      "get": {
+        "operationId": "AccountController_listExports",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DataExportDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      },
+      "post": {
+        "operationId": "AccountController_requestExport",
+        "parameters": [],
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataExportDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/me/exports/{id}": {
+      "get": {
+        "operationId": "AccountController_getExport",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataExportDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/me/notices/excluded-companies": {
+      "post": {
+        "operationId": "AccountController_ackExcludedNotice",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/me/notifications/preferences": {
+      "get": {
+        "operationId": "NotificationsController_preferences",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationPreferencesDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      },
+      "put": {
+        "operationId": "NotificationsController_update",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationPreferencesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationPreferencesDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/me/open-space": {
+      "get": {
+        "operationId": "PrivacyController_openSpaceStatus",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenSpaceStatusDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "privacy"
+        ]
+      },
+      "put": {
+        "operationId": "PrivacyController_setOpenSpace",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpenSpaceUpdateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenSpaceStatusDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "privacy"
+        ]
+      }
+    },
+    "/me/personal-email": {
+      "post": {
+        "operationId": "AccountController_personalEmail",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptedDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/me/personal-email/verify": {
+      "post": {
+        "operationId": "AccountController_personalEmailVerify",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PersonalEmailVerifyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccessInfoDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "account"
+        ]
+      }
+    },
+    "/me/photos": {
+      "get": {
+        "operationId": "ProfileController_listPhotos",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OwnPhotoDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "profile"
+        ]
+      },
+      "post": {
+        "operationId": "ProfileController_createPhoto",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PhotoUploadDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "profile"
+        ]
+      }
+    },
+    "/me/photos/{id}": {
+      "delete": {
+        "operationId": "ProfileController_removePhoto",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "profile"
+        ]
+      }
+    },
+    "/me/photos/{id}/confirm": {
+      "post": {
+        "operationId": "ProfileController_confirmPhoto",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnPhotoDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "profile"
+        ]
+      }
+    },
+    "/me/photos/order": {
+      "patch": {
+        "operationId": "ProfileController_reorder",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhotoOrderDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OwnPhotoDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "profile"
+        ]
+      }
+    },
+    "/me/profile": {
+      "get": {
+        "operationId": "ProfileController_getOwn",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnProfileDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "profile"
+        ]
+      },
+      "patch": {
+        "operationId": "ProfileController_update",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfilePatchDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnProfileDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "profile"
+        ]
+      }
+    },
+    "/me/profile/answers": {
+      "put": {
+        "operationId": "ProfileController_answers",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnswersDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnProfileDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "profile"
+        ]
+      }
+    },
+    "/me/profile/interests": {
+      "put": {
+        "operationId": "ProfileController_interests",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InterestsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnProfileDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "profile"
+        ]
+      }
+    },
+    "/me/reports": {
+      "get": {
+        "operationId": "SafetyController_myReports",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ReportOutcomeDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "safety"
+        ]
+      }
+    },
+    "/me/sanctions": {
+      "get": {
+        "operationId": "SafetyController_mySanctions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MySanctionDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "safety"
+        ]
+      }
+    },
+    "/me/sanctions/{id}/appeal": {
+      "post": {
+        "operationId": "SafetyController_appeal",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppealDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceivedDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "safety"
+        ]
+      }
+    },
+    "/me/trips": {
+      "get": {
+        "operationId": "TripsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripsDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "trips"
+        ]
+      },
+      "post": {
+        "operationId": "TripsController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TripInputDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "trips"
+        ]
+      }
+    },
+    "/me/trips/{id}": {
+      "delete": {
+        "operationId": "TripsController_remove",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "trips"
+        ]
+      },
+      "put": {
+        "operationId": "TripsController_update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TripInputDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TripDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "trips"
+        ]
+      }
+    },
+    "/offsites": {
+      "get": {
+        "operationId": "AppOffsitesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OffsiteSummaryDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "offsites"
+        ]
+      }
+    },
+    "/offsites/{id}": {
+      "get": {
+        "operationId": "AppOffsitesController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OffsiteDetailDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "offsites"
+        ]
+      }
+    },
+    "/offsites/{id}/attendance": {
+      "delete": {
+        "operationId": "AppOffsitesController_leave",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "offsites"
+        ]
+      },
+      "patch": {
+        "operationId": "AppOffsitesController_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AttendancePatchDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OffsiteDetailDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "offsites"
+        ]
+      },
+      "put": {
+        "operationId": "AppOffsitesController_attend",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OffsiteDetailDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "offsites"
+        ]
+      }
+    },
+    "/offsites/{id}/feed": {
+      "get": {
+        "operationId": "AppOffsitesController_feed",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "offsites"
+        ]
+      }
+    },
+    "/profiles/{id}": {
+      "get": {
+        "operationId": "ProfileController_profile",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileDeckDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "profile"
         ]
       }
     },
@@ -1419,6 +7304,425 @@
         ],
         "tags": [
           "registration"
+        ]
+      }
+    },
+    "/reports": {
+      "post": {
+        "operationId": "SafetyController_report",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReportDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceivedDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "safety"
+        ]
+      }
+    },
+    "/settings/excluded-companies": {
+      "get": {
+        "operationId": "PrivacyController_excludedCompanies",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExcludedCompaniesDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "privacy"
+        ]
+      }
+    },
+    "/settings/excluded-companies/{companyId}": {
+      "delete": {
+        "operationId": "PrivacyController_removeExcluded",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangeResultDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangeResultDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "privacy"
+        ]
+      },
+      "put": {
+        "operationId": "PrivacyController_addExcluded",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangeResultDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangeResultDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "privacy"
+        ]
+      }
+    },
+    "/settings/excluded-company-changes/{id}": {
+      "delete": {
+        "operationId": "PrivacyController_cancelChange",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "privacy"
+        ]
+      }
+    },
+    "/swipes": {
+      "post": {
+        "operationId": "SwipesController_swipe",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SwipeBodyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SwipeResultDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "swipes"
+        ]
+      }
+    },
+    "/swipes/rollback": {
+      "post": {
+        "operationId": "SwipesController_rollback",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RollbackBodyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RollbackResultDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "swipes"
+        ]
+      }
+    },
+    "/tabs": {
+      "get": {
+        "operationId": "NotificationsController_tabs",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TabsDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/taxonomies": {
+      "get": {
+        "operationId": "ProfileController_taxonomiesList",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxonomiesDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "tags": [
+          "profile"
+        ]
+      }
+    },
+    "/waitlist": {
+      "post": {
+        "operationId": "WaitlistController_request",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WaitlistRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReceivedDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "waitlist"
+        ]
+      }
+    },
+    "/waitlist/confirm": {
+      "post": {
+        "operationId": "WaitlistController_verify",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WaitlistVerificationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "waitlist"
+        ]
+      }
+    },
+    "/web-deletion/code": {
+      "post": {
+        "operationId": "WebDeletionController_code",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebDeletionAcceptedDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "web-deletion"
+        ]
+      }
+    },
+    "/web-deletion/confirm": {
+      "post": {
+        "operationId": "WebDeletionController_confirm",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyCodeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebDeletionResultDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "web-deletion"
         ]
       }
     }

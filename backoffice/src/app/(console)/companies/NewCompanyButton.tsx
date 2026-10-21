@@ -2,12 +2,23 @@
 
 import { useActionState, useEffect, useState } from 'react';
 import { Dialog } from '@/components/Dialog';
-import { Button, FormMessage, Note, RequiredLabel, TextArea, TextInput } from '@/components/ui';
+import {
+  Button,
+  Checkbox,
+  FormMessage,
+  Note,
+  RequiredLabel,
+  TextArea,
+  TextInput,
+} from '@/components/ui';
 import { initialFormState } from '@/lib/form-state';
 import { t } from '@/texts';
 import { createCompanyAction } from './actions';
 
-/** "Nuova azienda" (mockup 18a): solo il nome e i domini, nessun logo (D23, D35). */
+/**
+ * "Nuova azienda" (mockup 18a): solo il nome e i domini, nessun logo (D23, D35); il tipo
+ * dimostrativo si sceglie alla creazione e non cambia più (D42).
+ */
 export function NewCompanyButton() {
   const [open, setOpen] = useState(false);
   const [round, setRound] = useState(0);
@@ -53,6 +64,11 @@ function NewCompanyDialog({ open, onClose }: { open: boolean; onClose: () => voi
           spellCheck={false}
           defaultValue={state.values?.domains}
           error={state.fieldErrors?.domains}
+        />
+        <Checkbox
+          label={t('backoffice.newCompany.demo')}
+          hint={t('backoffice.newCompany.demo.hint')}
+          name="isDemo"
         />
         <TextArea
           label={

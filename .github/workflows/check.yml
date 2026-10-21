@@ -1,7 +1,7 @@
 # Controlli del backend su ogni PR verso main e su ogni push su main (D231): lint con i confini
 # tra app e admin, formato, tipi, build, test di unità, suite della regola core e integrazione
-# su PostgreSQL reale, contratti OpenAPI aggiornati e npm audit. PostgreSQL è un servizio di
-# GitHub Actions (in locale niente Docker, D237). Nessun segreto necessario.
+# su PostgreSQL reale, contratti OpenAPI aggiornati e npm audit. PostgreSQL, Redis, MinIO e
+# Mailpit sono servizi di GitHub Actions (in locale niente Docker, D237). Nessun segreto necessario.
 name: Verifica
 
 on:
@@ -36,8 +36,36 @@ jobs:
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
+      # Redis vero per il tempo reale e la cache L2 (D229, D240)
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      # Archivio S3 vero (D240): MinIO, come in locale (bitnami parte senza comando)
+      minio:
+        image: bitnami/minio:latest
+        env:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+        ports:
+          - 9100:9000
+      # Email vere via SMTP (D240): Mailpit, con l'API su 8025 per leggere i codici
+      mailpit:
+        image: axllent/mailpit:latest
+        ports:
+          - 1025:1025
+          - 8025:8025
     env:
       TEST_DATABASE_URL: postgres://postgres@localhost:5432/swipe_slide_test
+      TEST_REDIS_URL: redis://localhost:6379
+      # Credenziali di sviluppo di MinIO solo per il servizio dei controlli, nessun segreto
+      S3_ACCESS_KEY_ID: minioadmin
+      S3_SECRET_ACCESS_KEY: minioadmin
     steps:
       - name: Scarica il codice
         uses: actions/checkout@v7

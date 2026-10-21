@@ -4,8 +4,16 @@ import { Icon } from '@/components/Icon';
 import { Photo } from '@/components/Photo';
 import { alertKey, dueLabel, isNearDue, waitingLabel } from '@/lib/time';
 import { t } from '@/texts';
-import { getAdminApi, type ApprovalDetail, type ApprovalSummary } from '@/server/admin-api';
+import { ActionDialog } from '@/components/ActionDialog';
+import { REJECTION_REASON } from '@/lib/labels';
+import {
+  getAdminApi,
+  type ApprovalDetail,
+  type ApprovalSummary,
+  type NewPhoto,
+} from '@/server/admin-api';
 import { requireOperator } from '@/server/auth';
+import { decideNewPhotoAction } from './actions';
 import { DecisionForm } from './DecisionForm';
 
 type Params = { review?: string | string[]; tab?: string | string[]; done?: string | string[] };
@@ -22,6 +30,7 @@ export default async function ApprovalsPage({ searchParams }: { searchParams: Pr
   const selectedId = first(params.review) ?? queue.profiles[0]?.id;
   const selected =
     tab === 'profiles' && selectedId ? await loadDetail(current.token, selectedId) : null;
+  const newPhotos = tab === 'photos' ? await api.getNewPhotos(current.token) : [];
   const now = new Date();
 
   return (
@@ -59,12 +68,14 @@ export default async function ApprovalsPage({ searchParams }: { searchParams: Pr
           {t(
             done === 'approved'
               ? 'backoffice.approvalQueue.approved'
-              : 'backoffice.approvalQueue.rejected',
+              : done === 'blocked'
+                ? 'backoffice.approvalQueue.blocked'
+                : 'backoffice.approvalQueue.rejected',
           )}
         </p>
       ) : null}
       {tab === 'photos' ? (
-        <p className="sheet empty">{t('backoffice.placeholder')}</p>
+        <NewPhotos photos={newPhotos} now={now} />
       ) : queue.profiles.length === 0 ? (
         <p className="sheet empty">{t('backoffice.approvalQueue.empty')}</p>
       ) : (
@@ -173,6 +184,12 @@ function Detail({ detail, now }: { detail: ApprovalDetail; now: Date }) {
         ))}
       </ul>
       <dl className="detail__fields">
+        {detail.companyName ? (
+          <div>
+            <dt className="label-caps">{t('backoffice.column.company')}</dt>
+            <dd>{detail.companyName}</dd>
+          </div>
+        ) : null}
         {detail.practiceArea ? (
           <div>
             <dt className="label-caps">{t('backoffice.approvalQueue.practiceArea')}</dt>
@@ -196,7 +213,78 @@ function Detail({ detail, now }: { detail: ApprovalDetail; now: Date }) {
         <Icon name="lock" size={16} />
         <span>{t('backoffice.approvalQueue.limits')}</span>
       </p>
-      <DecisionForm key={detail.id} reviewId={detail.id} />
+      {detail.previousAttempts.length > 0 ? (
+        <section className="previous" aria-labelledby="previous-title">
+          <h3 id="previous-title" className="label-caps">
+            {t('backoffice.approvalQueue.previous')}
+          </h3>
+          <ul className="list">
+            {detail.previousAttempts.map((item) => (
+              <li key={item.attempt} className="list__item">
+                <span className="list__main">
+                  {t('backoffice.approvalQueue.attemptOf.title', {
+                    attempt: item.attempt,
+                    total: detail.maxAttempts,
+                  })}
+                  {item.reason ? ` · ${t(REJECTION_REASON[item.reason])}` : ''}
+                </span>
+                {item.userExplanation ? (
+                  <span className="list__sub">{item.userExplanation}</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+      <DecisionForm
+        key={detail.id}
+        reviewId={detail.id}
+        lastAttempt={detail.attempt >= detail.maxAttempts}
+      />
     </section>
+  );
+}
+
+/** Foto nuove dopo l'approvazione (D143): una alla volta, la più vecchia in cima. */
+function NewPhotos({ photos, now }: { photos: NewPhoto[]; now: Date }) {
+  if (photos.length === 0) return <p className="sheet empty">{t('backoffice.newPhotos.empty')}</p>;
+  return (
+    <ul className="photo-grid">
+      {photos.map((item) => (
+        <li key={item.id} className="sheet photo-card">
+          <Photo
+            photo={item.photo}
+            variant="large"
+            label={t('backoffice.newPhotos.of', { name: item.firstName ?? item.userId })}
+          />
+          <p className="photo-card__name">{item.firstName ?? item.userId}</p>
+          <p className="queue__sub">
+            {waitingLabel(new Date(item.submittedAt), now)} · {dueLabel(new Date(item.dueAt), now)}
+          </p>
+          <div className="photo-card__actions">
+            <ActionDialog
+              action={decideNewPhotoAction}
+              trigger={{
+                label: t('backoffice.newPhotos.approve'),
+                variant: 'primary',
+                icon: 'check',
+              }}
+              title={t('backoffice.newPhotos.approve')}
+              hidden={{ photoId: item.id, outcome: 'approved' }}
+              submitLabel={t('backoffice.newPhotos.approve')}
+            />
+            <ActionDialog
+              action={decideNewPhotoAction}
+              trigger={{ label: t('backoffice.newPhotos.reject'), variant: 'outline' }}
+              title={t('backoffice.newPhotos.reject')}
+              effects={[t('backoffice.newPhotos.reject.effect')]}
+              hidden={{ photoId: item.id, outcome: 'rejected' }}
+              destructive
+              submitLabel={t('backoffice.newPhotos.reject')}
+            />
+          </div>
+        </li>
+      ))}
+    </ul>
   );
 }

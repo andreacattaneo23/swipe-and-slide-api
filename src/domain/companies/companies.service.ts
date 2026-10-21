@@ -19,6 +19,10 @@ export interface CompanyRecord {
   isDemo: boolean;
   createdAt: Date;
   domains: string[];
+  /** Fine dell'intervallo della rimozione, solo per le aziende `removing` (D111). */
+  removalFinalAt: Date | null;
+  /** Utenti in forma aggregata: `null` sotto la soglia di 10 persone (D89, D197). */
+  usersCount: number | null;
 }
 
 /** Chi agisce dal backoffice e perché (D91): finisce nell'audit, senza dati personali. */
@@ -99,6 +103,7 @@ export class CompaniesService {
           await tx
             .insert(companyDomains)
             .values(domains.map((domain) => ({ domain, companyId: created!.id })));
+          await this.answerWaitlist(tx, domains);
         }
         await this.audit.write(
           {
@@ -151,6 +156,7 @@ export class CompaniesService {
       this.db.transaction(async (tx) => {
         await this.lockCompany(tx, id);
         await tx.insert(companyDomains).values({ domain: valid!, companyId: id });
+        await this.answerWaitlist(tx, [valid!]);
         await this.audit.write(
           {
             type: 'action',
@@ -165,38 +171,6 @@ export class CompaniesService {
         );
       }),
     );
-    return this.get(id);
-  }
-
-  /**
-   * Toglie un dominio che nessuna email aziendale usa. [Proposta] Con utenti sul dominio serve
-   * il flusso della rimozione con la ri-verifica (P14), non ancora realizzato: `409`.
-   */
-  async removeDomain(id: string, domain: string, by: OperatorAction): Promise<CompanyRecord> {
-    await this.db.transaction(async (tx) => {
-      await this.lockCompany(tx, id);
-      const inUse = await tx.execute<{ used: boolean }>(
-        sql`select exists (select 1 from work_emails where domain = ${domain} and status = 'active') as used`,
-      );
-      if (inUse.rows[0]?.used) throw ApiError.conflict('company.domain.inUse');
-      const removed = await tx
-        .delete(companyDomains)
-        .where(and(eq(companyDomains.companyId, id), eq(companyDomains.domain, domain)))
-        .returning({ domain: companyDomains.domain });
-      if (!removed.length) throw ApiError.notFound();
-      await this.audit.write(
-        {
-          type: 'action',
-          action: 'domain_removed',
-          operatorId: by.operatorId,
-          sessionId: by.sessionId,
-          objectType: 'company',
-          objectId: id,
-          explanation: by.explanation,
-        },
-        tx,
-      );
-    });
     return this.get(id);
   }
 
@@ -225,6 +199,20 @@ export class CompaniesService {
         tx,
       );
     });
+  }
+
+  /**
+   * Le richieste della lista d'attesa di un dominio appena aggiunto ricevono la risposta neutra
+   * e si cancellano (D95, P13): `send-notices` invia l'email di contatto.
+   */
+  private async answerWaitlist(tx: Executor, domains: string[]): Promise<void> {
+    await tx.execute(sql`
+      with removed as (
+        delete from waitlist_requests
+         where domain = any (${`{${domains.join(',')}}`}::text[])
+           and contact_confirmed_at is not null
+        returning contact_email)
+      insert into waitlist_notices (contact_email) select distinct contact_email from removed`);
   }
 
   private async lockCompany(tx: Executor, id: string): Promise<void> {
@@ -262,12 +250,19 @@ export class CompaniesService {
         ),
       )
       .orderBy(asc(companyDomains.domain));
+    const counts = await this.db.execute<{ id: string; n: number | null }>(sql`
+      select id, company_users_aggregate(id) as n from companies
+       where id = any (${`{${rows.map((row) => row.id).join(',')}}`}::uuid[])`);
     return rows.map((row) => ({
       id: row.id,
       name: row.name,
       status: row.status,
       isDemo: row.isDemo,
       createdAt: row.createdAt,
+      removalFinalAt: row.removalFinalAt,
+      usersCount: ((n) => (n === null || n === undefined ? null : Number(n)))(
+        counts.rows.find((count) => count.id === row.id)?.n,
+      ),
       domains: domains
         .filter((domain) => domain.companyId === row.id)
         .map((domain) => domain.domain),

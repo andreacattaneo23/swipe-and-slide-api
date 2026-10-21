@@ -100,3 +100,43 @@ export function formatDay(date: string): string {
   }).format(day);
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
+
+/** Tempo che resta a una scadenza (moderazione, ricorsi): ore intere, sotto l'ora i minuti. */
+export function timeLeftLabel(dueAt: Date, now: Date): string {
+  const left = dueAt.getTime() - now.getTime();
+  if (left <= 0) return t('backoffice.deadline.overdue');
+  if (left < HOUR) {
+    return t('backoffice.approvalQueue.dueIn.minutes', { count: Math.ceil(left / MINUTE) });
+  }
+  return t('backoffice.approvalQueue.dueIn', { count: Math.floor(left / HOUR) });
+}
+
+/** Data e ora brevi nel fuso dell'app: "21/10/2026, 14:05". */
+export function formatDateTime(date: Date): string {
+  return new Intl.DateTimeFormat('it-IT', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Europe/Rome',
+  }).format(date);
+}
+
+/** Istante ISO → data (aaaa-mm-gg) e ora (hh:mm) di Roma, per riempire i campi dei moduli. */
+export function isoToRome(value: string): { date: string; time: string } {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: ROME,
+    hourCycle: 'h23',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).formatToParts(new Date(value));
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? '';
+  return {
+    date: `${get('year')}-${get('month')}-${get('day')}`,
+    time: `${get('hour')}:${get('minute')}`,
+  };
+}

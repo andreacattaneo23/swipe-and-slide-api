@@ -5,11 +5,9 @@ export interface OutgoingEmail {
   from: 'neutral' | 'project';
   subject: string;
   text: string;
-  /** Solo per l'adattatore di sviluppo: codice da mostrare nel log, mai nei log di produzione. */
-  devCode?: string;
 }
 
-/** Adattatore sostituibile dell'invio delle email (Brevo in produzione, log in sviluppo). */
+/** Adattatore sostituibile dell'invio delle email (SMTP: Mailpit in locale, Brevo in produzione). */
 export interface EmailSender {
   send(email: OutgoingEmail): Promise<void>;
 }

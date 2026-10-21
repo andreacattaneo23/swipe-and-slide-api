@@ -50,12 +50,15 @@ export class QueueItemDto {
   @ApiProperty({ nullable: true, type: String }) lookingFor: string | null;
   @ApiProperty({ nullable: true, type: String }) bio: string | null;
   @ApiProperty({ nullable: true, type: String }) companyName: string | null;
+  @ApiPropertyOptional({ nullable: true, type: String, description: 'URL firmato, pochi minuti' })
+  photoUrl: string | null;
 }
 
 export class ReviewPhotoDto {
   @ApiProperty() id: string;
   @ApiProperty() position: number;
   @ApiProperty() status: string;
+  @ApiProperty({ description: 'URL firmato di pochi minuti' }) url: string;
 }
 
 export class PreviousAttemptDto {

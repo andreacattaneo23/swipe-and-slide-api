@@ -10,7 +10,7 @@ export default async function LoginPage() {
   const current = await currentOperator();
   if (current) redirect(homeFor(current.operator.roles));
   const flow = await readSignInFlow();
-  const step = flow?.step ?? 'email';
+  const step = flow ? 'verify' : 'email';
 
   return (
     <main className="sign-in">

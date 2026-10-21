@@ -1,7 +1,7 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { and, eq, gt, isNull, sql } from 'drizzle-orm';
 import { DATABASE, Database, Executor } from '../../infra/database/database';
-import { blockedHashes, personalIdentities, users, workEmails } from '../../infra/database/schema';
+import { blockedHashes, personalIdentities, users } from '../../infra/database/schema';
 import { CryptoService } from '../../infra/crypto/crypto.service';
 import { ApiError, ErrorCode } from '../../infra/http/api-error';
 import { CompaniesService } from '../../domain/companies/companies.service';
@@ -140,13 +140,15 @@ export class PersonalIdentitiesService {
     });
   }
 
-  /** Account con l'email aziendale attiva indicata (accesso con l'email, D82). */
+  /**
+   * Account con l'email aziendale attiva indicata (accesso con l'email, D82), se la persona non
+   * ha spento l'accesso con l'email aziendale (D233).
+   */
   async userByActiveWorkEmail(email: string): Promise<string | null> {
-    const [row] = await this.db
-      .select({ userId: workEmails.userId })
-      .from(workEmails)
-      .where(and(eq(workEmails.emailHash, this.emailHash(email)), eq(workEmails.status, 'active')));
-    return row?.userId ?? null;
+    const result = await this.db.execute<{ user_id: string }>(sql`
+      select w.user_id from work_emails w join users x on x.id = w.user_id
+       where w.email_hash = ${this.emailHash(email)} and w.status = 'active' and x.work_email_sign_in`);
+    return result.rows[0]?.user_id ?? null;
   }
 
   /** Identità di qualsiasi fornitore con questa email personale. */

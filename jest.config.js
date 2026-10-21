@@ -4,14 +4,16 @@
 const common = {
   testEnvironment: 'node',
   transform: {
-    // jose, otplib e le sue dipendenze sono ESM: ts-jest li trasforma in CommonJS come il codice del progetto
+    // jose ed expo-server-sdk sono ESM: ts-jest li trasforma in CommonJS come il codice del progetto
     '^.+\\.(t|j)s$': [
       'ts-jest',
       { tsconfig: 'tsconfig.json', diagnostics: { ignoreCodes: [151002] } },
     ],
   },
-  transformIgnorePatterns: ['/node_modules/(?!(jose|otplib|@otplib|@scure|@noble)/)'],
+  transformIgnorePatterns: ['/node_modules/(?!(jose|@scure|@noble|expo-server-sdk)/)'],
   moduleFileExtensions: ['ts', 'js', 'json'],
+  // Il backoffice ha i suoi test (Vitest, Playwright) e la sua build
+  modulePathIgnorePatterns: ['<rootDir>/backoffice/'],
 };
 
 module.exports = {
@@ -27,6 +29,13 @@ module.exports = {
       ...common,
       displayName: 'integration',
       testMatch: ['<rootDir>/test/integration/**/*.test.ts'],
+      globalSetup: '<rootDir>/test/support/global-setup.ts',
+    },
+    {
+      // Sistema vero (D240): PostgreSQL, MinIO e Mailpit avviati in locale
+      ...common,
+      displayName: 'e2e',
+      testMatch: ['<rootDir>/test/e2e/**/*.e2e.test.ts'],
       globalSetup: '<rootDir>/test/support/global-setup.ts',
     },
   ],

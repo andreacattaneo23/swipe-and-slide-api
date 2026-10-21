@@ -78,7 +78,7 @@ flowchart LR
   App -->|Continua con Apple / Google| IDP[Apple / Google<br/>token d'identità]
   API -->|JWKS| IDP
   Web[Sito statico<br/>cancellazione web] -->|HTTPS, CORS| API
-  Op[Operatore] -->|IAP / IAM + OTP + TOTP| BO[backoffice Next.js<br/>Cloud Run privato]
+  Op[Operatore] -->|Cloudflare Access + OTP| BO[backoffice Next.js<br/>Cloud Run privato]
   BO -->|account di servizio +<br/>identità firmata dell'operatore| ADM[admin-api<br/>Cloud Run privato]
   API --> DB[(Neon PostgreSQL UE)]
   ADM -->|backoffice_role| DB
@@ -113,12 +113,12 @@ swipe-and-slide-backend/
 │   │                    otp, approvals, offsites, regole degli indirizzi email
 │   ├── app/             API dell'app: auth (nonce, codice, Apple, Google, sessioni, identità
 │   │                    personali), registration, me, directory (comuni e aziende)
-│   ├── admin/           API di amministrazione: auth degli operatori (OTP e TOTP), companies,
+│   ├── admin/           API di amministrazione: auth degli operatori (OTP all'email), companies,
 │   │                    approvals, offsites
 │   ├── realtime/        modulo radice di realtime (per ora solo la salute)
 │   ├── infra/           config, database (Drizzle, schema, migratore), crypto, email (log e
 │   │                    Brevo), identity-providers (Apple, Google), audit, cache (limiti), http
-│   ├── cli/             comandi: migrate, seed, openapi, totp (sviluppo)
+│   ├── cli/             comandi: migrate, seed, openapi, storage-setup
 │   ├── bootstrap.ts     modulo radice secondo SERVICE_ROLE e misure HTTP comuni
 │   ├── main.ts          avvio HTTP secondo SERVICE_ROLE
 │   └── jobs.ts          avvio dei processi pianificati (comandi da fare)
@@ -175,7 +175,7 @@ Regole di dipendenza:
 | Foto | `sharp` (ricodifica, metadati rimossi), Cloudflare R2 con URL firmati | — | D46; librerie [Proposta] |
 | Controllo delle foto | Google Cloud Vision, **solo SafeSearch**, endpoint UE, nessuna funzione sul volto | — | D73, D110 |
 | Notifiche push | `expo-server-sdk` → Expo Push → APNs e FCM | — | [Proposta] |
-| Secondo fattore operatori | TOTP (RFC 6238) con una libreria open source | — | D88; libreria [Proposta] |
+| Secondo livello operatori | Cloudflare Access davanti al backoffice e ad `admin-api`, nessun TOTP | — | D241, D244 |
 | Log e tracce | `pino` (`nestjs-pino`), OpenTelemetry | — | D231 |
 | Test | Jest con ts-jest e supertest, PostgreSQL reale (Homebrew in locale, servizio di GitHub Actions nella CI) | — | Architettura; niente Docker in locale (D237) |
 | Backoffice | Next.js + TypeScript, build `standalone`, componenti semplici, font e Lucide locali | Next.js 16 | D92, D116, D231 |
@@ -253,28 +253,42 @@ ogni passo si accetta solo dopo i passi obbligatori che lo precedono (`registrat
 |----------|--------|-------|
 | Perimetro | `backoffice` e `admin-api` solo su Cloud Run privati; accesso con account Google del team via IAM o IAP | D92; IAP o proxy `gcloud` da scegliere al deploy |
 | Primo fattore | OTP all'email dell'operatore (scopo `operator`) | [Proposta] |
-| Secondo fattore | TOTP obbligatorio; segreto cifrato con una chiave in Secret Manager | D88 |
+| Secondo fattore | Nessun TOTP (D244): il secondo livello è Cloudflare Access davanti al backoffice e ad `admin-api` | D241, D244 |
 | Sessione | `operator_sessions`, durata breve (es. 8 ore), senza rinnovo; nel browser solo un cookie `HttpOnly`, `Secure`, `SameSite=Strict` del server Next.js; il token non arriva mai al browser | [Proposta] |
 | Ruoli | `admin` (Amministratore, tutto), `moderator` (segnalazioni, contenuti, sanzioni, approvazioni), `support` (account, ricorsi, richieste privacy) | D88 |
 | Motivazione | Obbligatoria per ogni azione su un utente, scelta da un elenco più un testo breve; l'audit non contiene dati personali | D91, D112 |
-| Conferma rafforzata | Rimozione di un'azienda e cancellazione di un account: nome o identificativo digitato più un TOTP appena generato; anteprima e intervallo annullabile per la rimozione | D93, D111 |
-| Lettura delle chat | Moderatore: **solo** le copie dei messaggi segnalati. Amministratore: solo per richiesta delle autorità o indagine di sicurezza, con motivo, riferimento, periodo e TOTP, tramite la funzione `read_chat` che scrive l'audit nella stessa transazione; senza uno degli elementi l'accesso è respinto | D181, D187 |
+| Conferma rafforzata | Rimozione di un'azienda e cancellazione di un account: nome o identificativo esatto digitato più la motivazione, senza TOTP (D244); anche fusioni e spostamenti di dominio (D197); anteprima e intervallo annullabile per la rimozione | D93, D111, D244 |
+| Lettura delle chat | Moderatore: **solo** le copie dei messaggi segnalati. Amministratore: solo per richiesta delle autorità o indagine di sicurezza, con motivo, riferimento, periodo e identificativo del match digitato (senza TOTP, D244), tramite la funzione `read_chat` che scrive l'audit nella stessa transazione; senza uno degli elementi l'accesso è respinto | D181, D187, D244 |
 | Mai visibili | Chat (salvo i casi sopra), "chi ti interessa", aziende escluse, blocchi, stato dell'Open space; email mascherate, rivelazione solo con motivazione e audit | D90 |
 
 **Identità dell'operatore verificata a ogni richiesta** (D231). `admin-api` non si fida solo
 dell'account di servizio del backoffice. Per ogni richiesta controlla, nell'ordine:
-1. **chiamante**: Cloud Run IAM ammette solo l'account di servizio del backoffice;
+1. **chiamante**: il JWT di Cloudflare Access del backoffice (D241, intestazione
+   `Cf-Access-Jwt-Assertion`, firma con le chiavi del team e AUD dell'applicazione:
+   `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`); la verifica si spegne solo con
+   `CF_ACCESS_DISABLED=true`, mai in produzione;
 2. **operatore**: un'identità firmata in un'intestazione dedicata, cioè il token della sessione
-   dell'operatore emesso da `admin-api` dopo OTP e TOTP (JWT di breve durata, destinatario
-   `admin-api`, con `operator_id`, sessione e data dell'ultimo TOTP) e, se si sceglie IAP, anche
-   l'asserzione JWT di IAP inoltrata dal backoffice, con firma, destinatario ed email verificati;
+   dell'operatore emesso da `admin-api` dopo il codice all'email (JWT di breve durata,
+   destinatario `admin-api`, con `operator_id` e sessione);
 3. **stato e ruolo**: sessione non revocata e ruolo letti **dal database a ogni richiesta**, non
    dal token; la rotta dichiara il ruolo richiesto (`@OperatorRoles(...)`) e, per le azioni
-   sensibili, un TOTP recente;
+   distruttive, il nome o l'identificativo esatto digitato;
 4. **audit**: ogni azione registra `operator_id`, sessione, ruolo usato, motivazione ed esito.
 
 Così un backoffice compromesso, senza una sessione valida dell'operatore, non può agire a nome di
 nessuno.
+
+**Accesso dell'operatore** (D88, D238, D244). `POST /backoffice/auth/code` manda il codice
+all'email dell'operatore, con la stessa risposta per ogni indirizzo; `POST
+/backoffice/auth/verify` riceve email e codice, **senza secondo fattore** (D244: in produzione il
+secondo livello è Cloudflare Access, D241). Ogni errore conta come un tentativo sullo stesso
+codice e la risposta non dice se l'indirizzo è di un operatore: `401 invalid_credentials` con
+`remainingAttempts`, `400 code_expired`, `429 too_many_attempts` al quinto errore. Nelle conferme
+rafforzate (rimozione di un'azienda, cancellazione di un account, fusioni e spostamenti di
+dominio, D197) e nella lettura delle chat si digita il nome o l'identificativo esatto, con la
+motivazione; un nome diverso è `400 confirmation.mismatch`. I motivi del rifiuto
+dell'approvazione sono l'enum `review_rejection_reason`, unico per backend e backoffice e pubblicato
+in `openapi/admin.json`.
 
 ### 4.3 Autorizzazione e regola core
 
@@ -336,7 +350,7 @@ Misure decise con D231, salvo dove indicato.
 | Rischio | Contromisura |
 |---------|--------------|
 | API1 Autorizzazione a livello di oggetto | Ogni accesso a un altro utente, match o chat passa da `@ExposesUser` e dalle funzioni della regola; trigger come ultima difesa; `404` neutro; suite RC |
-| API2 Autenticazione | Token d'identità di Apple e Google verificati per firma JWKS, issuer, audience, scadenza e nonce a uso singolo; OTP con 5 tentativi e scadenza, impronte HMAC, limiti di frequenza, JWT brevi, rinnovo ruotato con rilevamento del riuso, TOTP per gli operatori |
+| API2 Autenticazione | Token d'identità di Apple e Google verificati per firma JWKS, issuer, audience, scadenza e nonce a uso singolo; OTP con 5 tentativi e scadenza, impronte HMAC, limiti di frequenza, JWT brevi, rinnovo ruotato con rilevamento del riuso, codice all'email e Cloudflare Access per gli operatori (D244) |
 | API3 Autorizzazione a livello di proprietà | DTO di risposta espliciti per ruolo (mai l'entità del database); `whitelist` in ingresso contro l'assegnazione di massa; nessuna email, `company_id` o stato dell'Open space nei DTO di altri utenti |
 | API4 Consumo di risorse | Rate limiting, limiti di dimensione, paginazione obbligatoria con massimo di pagina, timeout delle query, istanze massime di Cloud Run |
 | API5 Autorizzazione a livello di funzione | Rotte di amministrazione solo in `admin-api` privato; ruoli verificati a ogni richiesta; `@Scopes` e `@OperatorRoles` obbligatori, test di copertura |
@@ -428,7 +442,7 @@ istanza e il feed si calcola dal database.
 | Distribuzione | Redis pub/sub su Upstash UE: ogni istanza consegna sui canali personali degli utenti connessi a lei; nessuna affinità di sessione | D182 |
 | Contenuto degli eventi | Solo tipo e identificativi (`message`, `read`, `match`, `invite`, `agenda`, `approval`, `offsite`, `tabs`, `session`); mai testi, nomi o foto | D182 |
 | Destinatari | Decisi nel backend con la regola core nella transazione della scrittura (`can_write`, regola `match`, `can_interact`); `realtime` non decide nulla | D180 |
-| Autenticazione | Token di accesso alla connessione; solo ambiti `full` e `approval`; chiusura alla scadenza del token, all'uscita, alla revoca, a sospensioni e sanzioni | Architettura |
+| Autenticazione | Token di accesso nell'intestazione `Authorization` o nel primo messaggio (`{"type":"auth","token":…}` oppure, come l'app, `{"event":"auth","data":{"token":…}}`), risposta `{"type":"ready"}`; solo ambiti `full` e `approval`. Chiusura `4001` alla scadenza del token, con un token non valido o una sessione revocata (l'app rinnova e si riconnette); evento `session` e chiusura `4000` all'uscita, alla revoca, a sospensioni e sanzioni | Architettura; codici allineati all'app |
 | Ripresa | Alla riconnessione e al ritorno in primo piano l'app rilegge dall'API gli elenchi aperti e i messaggi successivi all'ultimo cursore noto (`after=<id>`); un evento perso non lascia dati sbagliati | D231 |
 | Ordinamento | Ordine definito dal server: `created_at` del database più identificativo crescente come spareggio; l'app ordina sempre per quello, mai per l'ora del telefono | D231 |
 | Idempotenza dell'invio | `clientMessageId` generato dall'app: un nuovo tentativo non crea un doppione | D231 |
@@ -487,20 +501,78 @@ npm ci
 createdb -h /tmp swipe_slide_dev && createdb -h /tmp swipe_slide_test
 cp .env.example .env        # poi compila i segreti (almeno 32 caratteri ciascuno)
 npm run db:migrate          # migrazioni SQL
-npm run db:seed             # dati di fantasia: aziende, operatore (stampa il segreto TOTP), utenti
+npm run storage:setup       # bucket dell'archivio su MinIO (http://127.0.0.1:9100)
+npm run db:seed             # dati di sviluppo: aziende, operatore, utenti con foto su MinIO
 npm run start:dev           # API dell'app su :3000 (SERVICE_ROLE=app)
 SERVICE_ROLE=admin npm run start   # API di amministrazione su :3001 (dopo una build)
 ```
 
-In sviluppo le email non partono: con `EMAIL_TRANSPORT=log` il codice OTP si scrive nel log
-dell'API. Il codice TOTP corrente dell'operatore del seed si ottiene con
-`node dist/cli/totp.js <segreto>`. Con `DATABASE_ROLE=app_role` (app) o `backoffice_role` (admin)
+Niente invii simulati (D240): le email partono via SMTP verso **Mailpit** (`127.0.0.1:1025`,
+interfaccia e API su `http://127.0.0.1:8025`), dove si leggono anche i codici OTP; foto ed
+esportazioni vanno su **MinIO** (`S3_ENDPOINT=http://127.0.0.1:9100`, credenziali solo nel `.env`
+locale). Senza `GOOGLE_APPLICATION_CREDENTIALS` le foto non hanno il controllo automatico e
+vanno solo in revisione manuale. L'operatore del seed accede con l'email e il codice letto su
+Mailpit. Con `DATABASE_ROLE=app_role` (app) o `backoffice_role` (admin)
 il servizio usa il ruolo del database della produzione.
+
+### Avvio locale completo
+
+Tutto funziona in locale sui servizi veri (D240), senza Docker e senza nulla di simulato.
+
+**Prerequisiti** (Homebrew, servizi avviati):
+
+```sh
+brew install postgresql@17 redis minio/stable/minio mailpit
+brew services start postgresql@17 redis mailpit
+# MinIO sulla 9100 (la 9000 è spesso di php-fpm), console sulla 9101
+minio server ~/minio-data --address 127.0.0.1:9100 --console-address 127.0.0.1:9101
+createdb -h /tmp swipe_slide_dev && createdb -h /tmp swipe_slide_test
+```
+
+**Un comando**:
+
+```sh
+npm ci
+npm run dev:stack
+```
+
+`dev:stack` crea `.env` con segreti casuali se manca (credenziali di sviluppo di MinIO
+`minioadmin` solo lì), compila, applica le migrazioni, crea il bucket, esegue il seed se il
+database è vuoto e avvia con `concurrently` la compilazione continua e i servizi. Con le porte
+già occupate: `APP_PORT`, `ADMIN_PORT`, `REALTIME_PORT`, `BACKOFFICE_PORT`.
+
+| Servizio | Indirizzo |
+|----------|-----------|
+| `app-api` (ruolo del database `app_role`) | `http://localhost:3000` |
+| `admin-api` (`backoffice_role`) | `http://localhost:3001` |
+| `realtime` (WebSocket) | `ws://localhost:3002/ws` |
+| Processi pianificati (`jobs_role`) | `hourly` all'avvio e a ogni ora piena, `daily` alle 3 |
+| Backoffice | `http://localhost:3100` |
+| Mailpit (codici OTP e email) | `http://localhost:8025` |
+| MinIO (console) | `http://127.0.0.1:9101` |
+| App web (export di Expo, CORS di sviluppo) | `http://localhost:8081`, `:8082`, `:8090` (`CORS_DEV_ORIGINS`) |
+
+**Utenti e operatore di prova** (seed, `npm run db:seed` per ricrearli):
+
+- operatore del backoffice `admin@backoffice.example` (ruoli admin, moderator, support): il
+  si accede con l'email e il codice di 6 cifre che arriva su Mailpit, senza secondo fattore
+  (D244);
+- utenti approvati con profilo completo e foto su MinIO: `luca.conti@personale.example`,
+  `giulia.ferri@personale.example`, `marco.riva@personale.example`, `sara.gallo@personale.example`,
+  `paolo.neri@personale.example`, `elena.bruno@personale.example`, `andrea.costa@personale.example`,
+  `chiara.fontana@personale.example`: si accede dall'app con l'email personale e il codice letto
+  su Mailpit;
+- account dimostrativo `revisore@personale.example` (codice di revisione dal backoffice, D42).
+
+**Prove end to end**: con lo stack avviato, `npm run test:e2e` (backend con Mailpit) e, nel
+backoffice, `ADMIN_API_URL=http://localhost:3001 E2E_PORT=3100 npm run test:e2e` (Playwright contro admin-api vera; con il backoffice già avviato dallo stack
+si riusa quello).
 
 ### Comandi
 
 | Script | Cosa fa |
 |--------|---------|
+| `npm run dev:stack` | Avvio locale completo: migrazioni, bucket, seed se vuoto, tutti i servizi e il backoffice |
 | `npm run start:dev` (`npm run dev`) | Compilazione continua e riavvio dell'API (`SERVICE_ROLE` a scelta) |
 | `npm run build` | Compilazione TypeScript in `dist/` |
 | `npm run start` | Avvio della build (`node dist/main.js`) |
@@ -509,11 +581,15 @@ il servizio usa il ruolo del database della produzione.
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run test` | Test di unità |
 | `npm run test:core-rule` | Suite della regola core (RC) su PostgreSQL reale (`swipe_slide_test`) |
-| `npm run test:integration` | API dell'app e di amministrazione con PostgreSQL reale e i ruoli del database |
+| `npm run test:integration` | API dell'app e di amministrazione con PostgreSQL, Redis, MinIO e Mailpit veri e i ruoli del database |
+| `npm run test:e2e` | Accesso degli operatori con il codice letto da Mailpit |
 | `npm run check` | `lint`, `format:check`, `typecheck`, `test` |
-| `npm run db:migrate` / `db:seed` | Migrazioni SQL e dati fittizi di sviluppo (il seed svuota le tabelle) |
+| `npm run db:migrate` / `db:seed` | Migrazioni SQL e dati di sviluppo (il seed svuota le tabelle, non `config` né le tassonomie) |
 | `npm run openapi` / `openapi:check` | Genera i contratti in `openapi/` e controlla che siano aggiornati |
-| `npm run jobs -- daily` / `hourly` | Processi pianificati in locale (comandi da fare) |
+| `npm run jobs -- daily` / `hourly` / `run <nome>` | Processi pianificati in locale (con `DATABASE_ROLE=jobs_role`) |
+| `npm run storage:setup` | Crea il bucket dell'archivio S3 (MinIO in locale) |
+| `npm run load:realtime` | Test di carico leggero del tempo reale (latenza tra due client, D190) |
+| `npm run texts:push` / `texts:push:check` | Testi delle push generati da `testi.js` |
 
 Le suite con il database usano `TEST_DATABASE_URL` (di base `postgres:///swipe_slide_test?host=/tmp`),
 ricreano lo schema all'avvio e girano in sequenza (`--runInBand`).
@@ -528,16 +604,17 @@ vengono da Secret Manager.
 | Servizio | `NODE_ENV`, `SERVICE_ROLE`, `PORT`, `LOG_LEVEL`, `APP_TIMEZONE` (`Europe/Rome`) |
 | Database | `DATABASE_URL` (pooler), `DATABASE_URL_DIRECT` (migrazioni), `DATABASE_ROLE` (ruolo impostato all'avvio della connessione) |
 | Redis | `REDIS_URL` |
-| Autenticazione | `JWT_ACCESS_SIGNING_KEY`, `JWT_ADMIN_SIGNING_KEY`, `HMAC_SECRET`, `HMAC_SECRET_VERSION`, `TOKEN_ENCRYPTION_KEY` (token dei fornitori e ticket, in produzione Cloud KMS), `TOTP_ENCRYPTION_KEY` |
-| Apple | `APPLE_TEAM_ID`, `APPLE_BUNDLE_ID`, `APPLE_SERVICES_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY` (client secret per la revoca dei token) |
+| Autenticazione | `JWT_ACCESS_SIGNING_KEY`, `JWT_ADMIN_SIGNING_KEY`, `HMAC_SECRET`, `HMAC_SECRET_VERSION`, `TOKEN_ENCRYPTION_KEY` (token dei fornitori e ticket) |
+| Apple | `APPLE_TEAM_ID`, `APPLE_BUNDLE_ID`, `APPLE_SERVICES_ID`, `APPLE_KEY_ID`, `APPLE_PRIVATE_KEY` (client secret per la revoca dei token), `APPLE_WEB_RETURN_URL` (ritorno del flusso web all'app, D228) |
 | Google | `GOOGLE_CLIENT_ID_IOS`, `GOOGLE_CLIENT_ID_ANDROID`, `GOOGLE_CLIENT_ID_WEB` |
-| Operatori | `BACKOFFICE_SERVICE_ACCOUNT`, `IAP_AUDIENCE` |
-| Google Cloud | `GCP_PROJECT_ID`, `GCP_REGION`, `KMS_KEY_NAME`, `VISION_API_ENDPOINT` |
-| Archivio | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_PHOTOS`, `R2_BUCKET_MODERATION`, `R2_BUCKET_EXPORTS`, `R2_BUCKET_BACKUPS`, `R2_BUCKET_TEMP`, `BACKUP_ENCRYPTION_KEY` |
-| Email | `EMAIL_TRANSPORT` (`log` in sviluppo, `brevo`), `BREVO_API_KEY`, `BREVO_WEBHOOK_SECRET`, `EMAIL_FROM_NEUTRAL`, `EMAIL_FROM_PROJECT` |
-| Sviluppo e test | `SEED_OPERATOR_TOTP_SECRET`, `TEST_DATABASE_URL` |
-| Push | `EXPO_ACCESS_TOKEN` |
-| HTTP | `CORS_ALLOWED_ORIGINS` |
+| Operatori | `CF_ACCESS_TEAM_DOMAIN`, `CF_ACCESS_AUD`, `CF_ACCESS_DISABLED` (solo sviluppo, D241) |
+| Controllo delle foto | `GOOGLE_APPLICATION_CREDENTIALS` (senza: solo revisione manuale), `VISION_API_ENDPOINT` |
+| Cifratura dei messaggi | `KEY_CUSTODY` (`env` in locale, `openbao` in produzione), `MESSAGE_MASTER_KEY`, `OPENBAO_ADDR`, `OPENBAO_TOKEN`, `OPENBAO_TRANSIT_KEY` |
+| Archivio (S3: MinIO in locale, R2 in produzione) | `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET`, `S3_FORCE_PATH_STYLE` |
+| Email | `EMAIL_TRANSPORT` (`smtp`: Mailpit in locale, Brevo in produzione; `brevo` per l'API), `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, `BREVO_API_KEY`, `BREVO_WEBHOOK_SECRET`, `EMAIL_FROM_NEUTRAL`, `EMAIL_FROM_PROJECT`, `TEAM_ALERT_EMAIL`, `APPEAL_URL` |
+| Sviluppo e test | `TEST_DATABASE_URL`, `TEST_REDIS_URL`, `TEST_S3_BUCKET`, `APP_PORT`, `ADMIN_PORT`, `REALTIME_PORT`, `BACKOFFICE_PORT` |
+| Push e tempo reale | `EXPO_ACCESS_TOKEN`, `REALTIME_INSTANCE_ID` |
+| HTTP | `CORS_ALLOWED_ORIGINS` (solo `/web-deletion/*`), `CORS_DEV_ORIGINS` (app web, solo fuori dalla produzione) |
 | Osservabilità | `OTEL_SERVICE_NAME`, `OTEL_EXPORTER_OTLP_ENDPOINT` |
 
 ### Test
@@ -564,7 +641,8 @@ vengono da Secret Manager.
 
 GitHub Actions su ogni PR (`.github/workflows/check.yml` e `pr-title.yml`): commitlint sul
 titolo, `npm ci`, `lint` (con i confini tra `app` e `admin`), `format:check`, `typecheck`,
-`build`, test di unità, suite RC e integrazione con PostgreSQL 17 come servizio, `openapi:check`,
+`build`, test di unità, suite RC e integrazione con PostgreSQL 17, Redis, MinIO e Mailpit come
+servizi, `openapi:check`,
 `npm audit --audit-level=high`; la build delle immagini Docker arriverà con il deploy. L'esito
 verde è la condizione per chiedere il merge.
 
@@ -615,17 +693,19 @@ e del controllo delle foto; dopo la beta Neon a consumo e il tempo reale a regim
 
 ## 10. Stato
 
-**Prima fase dello sviluppo** (D237, branch `feat/struttura-backend`).
+**Fase 3, integrazione** (branch `feat/integrazione`): unione con merge di `feat/profilo-account`
+(B1), `feat/feed-chat` (B2), `feat/sicurezza-admin` (B3) e `feat/backoffice-completo`.
 
 | Elemento | Stato |
 |----------|-------|
-| Specifica tecnica (questo README) | Presente, allineata a D236 |
-| Struttura NestJS con `SERVICE_ROLE`, script, ESLint con i confini, commitlint, CI | Presente |
-| Schema MVP, funzioni e trigger della regola core, ruoli del database | Presente (`db/migrations/`) |
-| Suite RC su PostgreSQL reale | Presente: casi della regola core, dell'Open space, delle aziende escluse, dei blocchi, della revoca, della concorrenza e delle rotte; i casi dei moduli mancanti sono `todo` |
-| Accesso (nonce, codice, Apple, Google, sessioni) e registrazione fino a `pending_approval`, `GET /me` | Presente |
-| API di amministrazione: operatori (OTP e TOTP), aziende e domini, approvazioni, offsite | Presente |
-| Contratti OpenAPI `openapi/app.json` e `openapi/admin.json` | Presenti, generati dai DTO |
-| Moduli dell'app (profilo e foto, Open space, aziende escluse, feed, swipe, match, chat, Agenda, offsite, blocchi, segnalazioni, notifiche), cifratura dei messaggi, servizio `realtime`, processi | Da creare |
-| Backoffice `backoffice/` | In un branch a parte |
-| Infrastruttura Google Cloud, Neon, Upstash, R2, Brevo, Apple e Google; Docker | Da creare al deploy |
+| Specifica tecnica (questo README) | Presente, allineata a D236–D241 |
+| Struttura NestJS con `SERVICE_ROLE`, script, ESLint con i confini, commitlint, CI con PostgreSQL, Redis, MinIO e Mailpit | Presente |
+| Schema, funzioni e trigger della regola core, ruoli del database; migrazioni `0001`–`0306` | Presente |
+| Suite RC su PostgreSQL reale | Presente; restano `todo` RC-47 (sottodominio poi mappato) e RC-200 (backup senza custodia della chiave) |
+| Accesso, registrazione, `GET /me`, ritorno web di Apple | Presente |
+| Profilo, foto su S3, tassonomie, trasferte, Open space, aziende escluse, blocchi, cambio azienda, ri-verifica, account, esportazione con i messaggi decifrati (B1) | Presente |
+| Feed, swipe, match, chat cifrata, inviti, Agenda, offsite, notifiche push, servizio `realtime` (B2) | Presente |
+| Sicurezza, moderazione, approvazioni e amministrazione completa (B3) | Presente |
+| Backoffice `backoffice/` allineato a `openapi/admin.json`, Playwright contro admin-api vera | Presente |
+| Avvio locale completo (`npm run dev:stack`) | Presente |
+| Infrastruttura di produzione (Hetzner, D241–D242) | Fuori da questa fase |

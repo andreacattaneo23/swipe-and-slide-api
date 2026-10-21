@@ -14,18 +14,17 @@ import { APP_CONFIG, AppConfig } from '../config/config';
  * Impronte, codici e cifratura locale.
  * - Impronte HMAC con il segreto del server e la sua versione (`v1:...`): email, codici OTP,
  *   token di rinnovo, nonce (README, "Impronte"). Mai valori in chiaro nel database.
- * - Cifratura AES-256-GCM con una chiave locale per i segreti TOTP e i token dei fornitori.
- *   [Proposta] In produzione la chiave dei token passa da Cloud KMS (D183): qui un adattatore
- *   sostituibile con la stessa interfaccia.
+ * - Cifratura AES-256-GCM con una chiave locale per i token dei fornitori.
+ *   La chiave viene da variabile d'ambiente, in locale e in produzione da un segreto del
+ *   server; [Proposta] la custodia in OpenBao come la chiave dei messaggi (D241) con la stessa
+ *   interfaccia.
  */
 @Injectable()
 export class CryptoService {
   private readonly tokenKey: Buffer;
-  private readonly totpKey: Buffer;
 
   constructor(@Inject(APP_CONFIG) private readonly config: AppConfig) {
     this.tokenKey = createHash('sha256').update(config.tokenEncryptionKey).digest();
-    this.totpKey = createHash('sha256').update(config.totpEncryptionKey).digest();
   }
 
   /** Impronta HMAC versionata di un valore già normalizzato, con un contesto che la separa. */
@@ -59,14 +58,6 @@ export class CryptoService {
 
   decryptToken(ciphertext: string): string {
     return this.decrypt(this.tokenKey, ciphertext);
-  }
-
-  encryptTotpSecret(plain: string): string {
-    return this.encrypt(this.totpKey, plain);
-  }
-
-  decryptTotpSecret(ciphertext: string): string {
-    return this.decrypt(this.totpKey, ciphertext);
   }
 
   private encrypt(key: Buffer, plain: string): string {

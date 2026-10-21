@@ -1,24 +1,26 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import { Button, FormMessage, Note, RequiredLabel, Select, TextArea } from '@/components/ui';
 import { initialFormState } from '@/lib/form-state';
-import { t, type TextKey } from '@/texts';
-import { REVIEW_REASONS, type ReviewReason } from '@/server/admin-api/types';
+import { REJECTION_REASON } from '@/lib/labels';
+import { t } from '@/texts';
+import { REJECTION_REASONS } from '@/server/admin-api/types';
 import { decideApproval } from './actions';
 
-/** Testi dei motivi del rifiuto: "Foto non conforme" da testi.js, gli altri [Proposta]. */
-export const REASON_TEXTS: Record<ReviewReason, TextKey> = {
-  non_compliant_photo: 'reason.photos',
-  inappropriate_photos: 'reason.inappropriatePhotos',
-  fake_profile: 'reason.fakeProfile',
-  disallowed_text: 'reason.disallowedText',
-  reveals_company_or_clients: 'reason.revealsCompany',
-};
-
-/** Esito della revisione (mockup 18c): motivo, motivazione, rifiuta o approva. */
-export function DecisionForm({ reviewId }: { reviewId: string }) {
+/**
+ * Esito della revisione (mockup 18c): motivo e testo per l'utente servono solo al rifiuto, la
+ * motivazione per l'audit a entrambe le decisioni.
+ */
+export function DecisionForm({
+  reviewId,
+  lastAttempt,
+}: {
+  reviewId: string;
+  lastAttempt: boolean;
+}) {
   const [state, action, pending] = useActionState(decideApproval, initialFormState);
+  const [reason, setReason] = useState(state.values?.reason ?? '');
   return (
     <form action={action} className="decision" noValidate>
       <h3 className="decision__title">{t('backoffice.approvalQueue.outcome')}</h3>
@@ -27,16 +29,26 @@ export function DecisionForm({ reviewId }: { reviewId: string }) {
         <Select
           label={t('backoffice.approvalQueue.reason')}
           name="reason"
-          defaultValue={state.values?.reason ?? ''}
+          value={reason}
+          onChange={(event) => setReason(event.target.value)}
           error={state.fieldErrors?.reason}
         >
           <option value="">{t('backoffice.approvalQueue.reason.placeholder')}</option>
-          {REVIEW_REASONS.map((reason) => (
-            <option key={reason} value={reason}>
-              {t(REASON_TEXTS[reason])}
+          {REJECTION_REASONS.map((item) => (
+            <option key={item} value={item}>
+              {t(REJECTION_REASON[item])}
             </option>
           ))}
         </Select>
+        <TextArea
+          label={t('backoffice.approvalQueue.userText')}
+          hint={t('backoffice.approvalQueue.userText.hint')}
+          name="userExplanation"
+          rows={2}
+          maxLength={1000}
+          defaultValue={state.values?.userExplanation}
+          error={state.fieldErrors?.userExplanation}
+        />
         <TextArea
           label={
             <RequiredLabel
@@ -44,14 +56,17 @@ export function DecisionForm({ reviewId }: { reviewId: string }) {
               note={t('backoffice.removalModal.required')}
             />
           }
+          hint={t('backoffice.explanation.hint')}
           name="explanation"
           required
           rows={2}
+          maxLength={500}
           defaultValue={state.values?.explanation}
           error={state.fieldErrors?.explanation}
         />
       </div>
       <Note icon="info">{t('backoffice.approvalQueue.appOnly')}</Note>
+      {lastAttempt ? <Note icon="alert">{t('backoffice.approvalQueue.lastAttempt')}</Note> : null}
       <Note icon="lock">{t('backoffice.removalModal.audit')}</Note>
       <FormMessage status={state.status} message={state.message ?? state.fieldErrors?.form} />
       <div className="decision__buttons">

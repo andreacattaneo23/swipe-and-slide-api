@@ -31,6 +31,7 @@ import {
 } from 'class-validator';
 import { ApiError } from '../../infra/http/api-error';
 import { CompaniesService, CompanyRecord } from '../../domain/companies/companies.service';
+import { CompanyOperationsService } from '../../domain/companies/company-operations.service';
 import { OperatorAuthService } from '../auth/operator-auth.service';
 import { OperatorContext } from '../auth/operator-context';
 import { CurrentOperator, OperatorRoles } from '../auth/operator-roles.decorator';
@@ -54,6 +55,16 @@ export class CompanyDto {
 
   @ApiProperty()
   createdAt: Date;
+
+  @ApiPropertyOptional({ nullable: true, type: Date, description: 'Fine dell’intervallo (D111)' })
+  removalFinalAt: Date | null;
+
+  @ApiPropertyOptional({
+    nullable: true,
+    type: Number,
+    description: 'Utenti attivi in forma aggregata, `null` sotto 10 (D89)',
+  })
+  usersCount: number | null;
 }
 
 export class CompanyListQueryDto {
@@ -126,6 +137,7 @@ export class CompaniesController {
   constructor(
     private readonly companies: CompaniesService,
     private readonly auth: OperatorAuthService,
+    private readonly operations: CompanyOperationsService,
   ) {}
 
   @Get('companies')
@@ -172,7 +184,7 @@ export class CompaniesController {
 
   /**
    * Cancellazione con conferma rafforzata, solo per aziende senza utenti. Con utenti serve la
-   * rimozione con anteprima e intervallo (D111): non ancora disponibile, `409`.
+   * rimozione con anteprima e intervallo (D111, `/removal`): qui `409`.
    */
   @Delete('companies/:id')
   @OperatorRoles('admin')
@@ -185,7 +197,6 @@ export class CompaniesController {
     const company = await this.companies.get(id);
     if (company.name.trim().toLowerCase() !== body.confirmName.trim().toLowerCase())
       throw ApiError.badRequest('confirmation.mismatch');
-    await this.auth.confirmTotp(operator.operatorId, body.totp);
     await this.companies.delete(id, by(operator, body));
   }
 
@@ -203,21 +214,23 @@ export class CompaniesController {
   @Delete('companies/:id/domains/:domain')
   @OperatorRoles('admin')
   @ApiOkResponse({ type: CompanyDto })
-  removeDomain(
+  async removeDomain(
     @CurrentOperator() operator: OperatorContext,
     @Param('id', ParseUUIDPipe) id: string,
     @Param('domain') domain: string,
     @Body() body: ExplanationDto,
   ): Promise<CompanyDto> {
-    return this.companies.removeDomain(id, domain.toLowerCase(), by(operator, body)).then(toDto);
+    // Chi usa il dominio va in ri-verifica e resta nella stessa azienda (P14, RC-44)
+    await this.operations.removeDomain(id, domain.toLowerCase(), by(operator, body));
+    return this.companies.get(id).then(toDto);
   }
 }
 
-export function by(operator: OperatorContext, body: ExplanationDto) {
+export function by(operator: OperatorContext, body: { explanation?: string | null }) {
   return {
     operatorId: operator.operatorId,
     sessionId: operator.sessionId,
-    explanation: body.explanation.trim(),
+    explanation: body.explanation?.trim() ?? '',
   };
 }
 

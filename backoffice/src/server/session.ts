@@ -2,7 +2,7 @@
  * Cookie del backoffice (architettura, "Accesso degli operatori"; D231):
  * - sessione dell'operatore: token di admin-api cifrato, `HttpOnly`, `SameSite=Strict`, `Secure`
  *   fuori dallo sviluppo locale, durata uguale a quella della sessione (8 ore, senza rinnovo);
- * - procedura di accesso in corso (codice e TOTP): identificativo della sfida, 10 minuti.
+ * - procedura di accesso in corso: email dell'operatore, cifrata, 10 minuti come il codice.
  * Con i cookie sicuri si usa il prefisso `__Host-` (niente dominio, percorso `/`).
  */
 import 'server-only';
@@ -19,10 +19,10 @@ export interface StoredSession {
   expiresAt: string;
 }
 
+/** Accesso in corso: l'email serve alla verifica del codice (contratto, D244), solo nel cookie cifrato. */
 export interface SignInFlow {
-  challengeId: string;
+  email: string;
   maskedEmail: string;
-  step: 'code' | 'totp';
 }
 
 function names(secure: boolean) {

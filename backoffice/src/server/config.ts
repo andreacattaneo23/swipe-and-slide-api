@@ -1,15 +1,17 @@
 /**
- * Configurazione del backoffice dalle variabili d'ambiente (elenco in .env.example). In
- * produzione i segreti vengono da Secret Manager; senza quelli obbligatori il server non parte.
+ * Configurazione del backoffice dalle variabili d'ambiente (elenco in .env.example). Il backoffice
+ * parla solo con admin-api vera (D240): in sviluppo quella locale sulla porta 3001, in produzione
+ * l'URL del servizio privato, obbligatorio. I segreti vengono da Secret Manager; senza quelli
+ * obbligatori il server non parte.
  */
 import 'server-only';
 import { randomBytes } from 'node:crypto';
 
-export type AdminApiAdapter = 'mock' | 'http';
+/** admin-api in sviluppo (D238: porta 3001). */
+export const LOCAL_ADMIN_API_URL = 'http://localhost:3001';
 
 export interface BackofficeConfig {
-  adapter: AdminApiAdapter;
-  adminApiUrl: string | null;
+  adminApiUrl: string;
   adminApiIam: boolean;
   sessionSecret: Buffer;
   secureCookies: boolean;
@@ -20,16 +22,13 @@ const globalForConfig = globalThis as typeof globalThis & { __backofficeDevSecre
 
 export function readConfig(env: NodeJS.ProcessEnv = process.env): BackofficeConfig {
   const production = env.NODE_ENV === 'production';
-  const adapter = (env.ADMIN_API_ADAPTER || 'mock') as AdminApiAdapter;
-  if (adapter !== 'mock' && adapter !== 'http') {
-    throw new Error(`ADMIN_API_ADAPTER non valido: ${adapter} (ammessi: mock, http)`);
+  const configuredUrl = env.ADMIN_API_URL?.trim() || null;
+  if (production && !configuredUrl) {
+    throw new Error('ADMIN_API_URL è obbligatoria in produzione');
   }
-  const adminApiUrl = env.ADMIN_API_URL?.trim() || null;
-  if (adapter === 'http' && !adminApiUrl) {
-    throw new Error("ADMIN_API_URL è obbligatoria con l'adattatore http");
-  }
-  if (production && adapter === 'mock' && env.ALLOW_MOCK_IN_PRODUCTION !== 'true') {
-    throw new Error("L'adattatore mock non si usa in produzione");
+  const adminApiUrl = configuredUrl ?? LOCAL_ADMIN_API_URL;
+  if (!/^https?:\/\//.test(adminApiUrl)) {
+    throw new Error(`ADMIN_API_URL non valida: ${adminApiUrl}`);
   }
 
   let sessionSecret: Buffer;
@@ -47,7 +46,6 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env): BackofficeConf
   }
 
   return {
-    adapter,
     adminApiUrl,
     adminApiIam: env.ADMIN_API_IAM === 'true',
     sessionSecret,

@@ -6,6 +6,11 @@ export interface FormState {
   fieldErrors?: Partial<Record<string, string>>;
   /** Valori da rimettere nei campi dopo un errore (mai codici né segreti). */
   values?: Partial<Record<string, string>>;
+  /**
+   * Dati da mostrare una sola volta dopo l'azione (email rivelata, codice di revisione): restano
+   * nella risposta di quell'azione e non si salvano altrove.
+   */
+  result?: { label: string; value: string }[];
 }
 
 export const initialFormState: FormState = { status: 'idle' };

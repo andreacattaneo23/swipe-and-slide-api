@@ -3,8 +3,7 @@ import { SignInForm } from './SignInForm';
 
 vi.mock('./actions', () => ({
   requestCode: vi.fn(),
-  verifyCode: vi.fn(),
-  verifyTotp: vi.fn(),
+  verifySignIn: vi.fn(),
   restartSignIn: vi.fn(),
 }));
 
@@ -18,20 +17,14 @@ describe("accesso dell'operatore (D88)", () => {
     ).toBeInTheDocument();
   });
 
-  it('secondo passo: il codice con l’email mascherata (D90)', () => {
-    render(<SignInForm step="code" maskedEmail="a•••@swipeandslide.example" />);
-    expect(
-      screen.getByText('Abbiamo inviato un codice di 6 cifre a a•••@swipeandslide.example.'),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('textbox', { name: 'Codice di verifica, 6 cifre' })).toHaveAttribute(
+  it('secondo passo: solo il codice all’email mascherata (D90, D244)', () => {
+    render(<SignInForm step="verify" maskedEmail="a•••@swipeandslide.example" />);
+    expect(screen.getByText(/a•••@swipeandslide\.example/)).toBeInTheDocument();
+    expect(screen.getByLabelText('Codice di verifica')).toHaveAttribute(
       'autocomplete',
       'one-time-code',
     );
-  });
-
-  it('terzo passo: il secondo fattore', () => {
-    render(<SignInForm step="totp" maskedEmail="" />);
-    expect(screen.getByLabelText('Codice del secondo fattore')).toBeRequired();
+    expect(screen.queryByLabelText('Codice del secondo fattore')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Accedi' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: "Ricomincia dall'email" })).toBeInTheDocument();
   });

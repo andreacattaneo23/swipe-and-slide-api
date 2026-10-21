@@ -18,6 +18,15 @@ import { DirectoryController } from './directory/directory.controller';
 import { MeController } from './me/me.controller';
 import { RegistrationController } from './registration/registration.controller';
 import { RegistrationService } from './registration/registration.service';
+import { AccessService } from './account/access.service';
+import { AppleWebCallbackController } from './auth/apple-web-callback.controller';
+import { AccountController } from './account/account.controller';
+import { WebDeletionController } from './account/web-deletion.controller';
+import { PrivacyController } from './privacy/privacy.controller';
+import { ProfileController } from './profile/profile.controller';
+import { TripsController } from './trips/trips.controller';
+import { FEED_CHAT_CONTROLLERS, FEED_CHAT_PROVIDERS } from './feed-chat/feed-chat.module';
+import { SafetyController, WaitlistController } from './safety/safety.controller';
 
 /**
  * Modulo radice di `app-api` (SERVICE_ROLE=app): solo i moduli dell'app, i servizi di dominio e
@@ -36,6 +45,15 @@ export class AppApiModule {
         RegistrationController,
         MeController,
         DirectoryController,
+        ProfileController,
+        TripsController,
+        PrivacyController,
+        AccountController,
+        WebDeletionController,
+        AppleWebCallbackController,
+        ...FEED_CHAT_CONTROLLERS,
+        SafetyController,
+        WaitlistController,
       ],
       providers: [
         AccessTokenService,
@@ -45,8 +63,10 @@ export class AppApiModule {
         ProviderSignInService,
         RegistrationTicketService,
         RegistrationService,
+        AccessService,
         { provide: APP_GUARD, useClass: AccessGuard },
         { provide: APP_GUARD, useExisting: VisibilityGuard },
+        ...FEED_CHAT_PROVIDERS,
       ],
     };
   }

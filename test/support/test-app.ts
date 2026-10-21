@@ -6,7 +6,7 @@ import { AppApiModule } from '../../src/app/app-api.module';
 import { sha256Hex } from '../../src/infra/crypto/crypto.service';
 import { RateLimiter } from '../../src/infra/cache/rate-limiter';
 import { EMAIL_SENDER } from '../../src/infra/email/email-sender';
-import { LogEmailSender } from '../../src/infra/email/log-email-sender';
+import { CaptureEmailSender } from './capture-email-sender';
 import { setupApp } from '../../src/infra/http/setup-app';
 import {
   PROVIDER_KEYS,
@@ -80,24 +80,28 @@ export class FakeProviders {
 
 export interface TestApp {
   app: INestApplication;
-  email: LogEmailSender;
+  email: CaptureEmailSender;
 }
 
+/**
+ * App di prova. Con `realEmail` le email partono davvero via SMTP verso Mailpit (D240) e i
+ * codici si leggono dalla sua API (`test/support/mailpit.ts`); altrimenti restano nel doppio.
+ */
 export async function createTestApp(
   role: 'app' | 'admin',
   providers?: FakeProviders,
+  options: { realEmail?: boolean } = {},
 ): Promise<TestApp> {
-  const email = new LogEmailSender();
+  const email = new CaptureEmailSender();
   const root =
     role === 'app'
       ? AppApiModule.forRoot(testConfig('app'))
       : AdminApiModule.forRoot(testConfig('admin'));
   // I limiti per IP in memoria si provano a parte: qui tutte le richieste arrivano dallo stesso IP
   let builder = Test.createTestingModule({ imports: [root] })
-    .overrideProvider(EMAIL_SENDER)
-    .useValue(email)
     .overrideProvider(RateLimiter)
     .useValue({ hit: () => Promise.resolve(true) });
+  if (!options.realEmail) builder = builder.overrideProvider(EMAIL_SENDER).useValue(email);
   if (providers)
     builder = builder.overrideProvider(PROVIDER_KEYS).useValue(providers.providerKeys());
   const moduleRef = await builder.compile();

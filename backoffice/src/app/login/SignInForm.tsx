@@ -4,14 +4,13 @@ import { useActionState } from 'react';
 import { Button, FormMessage, TextInput } from '@/components/ui';
 import { initialFormState } from '@/lib/form-state';
 import { t } from '@/texts';
-import { requestCode, restartSignIn, verifyCode, verifyTotp } from './actions';
+import { requestCode, restartSignIn, verifySignIn } from './actions';
 
-export type SignInStep = 'email' | 'code' | 'totp';
+export type SignInStep = 'email' | 'verify';
 
-/** Accesso in tre passi: email, codice all'email, secondo fattore (D88). */
+/** Accesso in due passi: email, poi il codice ricevuto all'email (D88, D238, D244). */
 export function SignInForm({ step, maskedEmail }: { step: SignInStep; maskedEmail: string }) {
-  if (step === 'code') return <CodeStep maskedEmail={maskedEmail} />;
-  if (step === 'totp') return <TotpStep />;
+  if (step === 'verify') return <VerifyStep maskedEmail={maskedEmail} />;
   return <EmailStep />;
 }
 
@@ -40,8 +39,8 @@ function EmailStep() {
   );
 }
 
-function CodeStep({ maskedEmail }: { maskedEmail: string }) {
-  const [state, action, pending] = useActionState(verifyCode, initialFormState);
+function VerifyStep({ maskedEmail }: { maskedEmail: string }) {
+  const [state, action, pending] = useActionState(verifySignIn, initialFormState);
   return (
     <>
       <form action={action} className="sign-in__form" noValidate>
@@ -54,36 +53,8 @@ function CodeStep({ maskedEmail }: { maskedEmail: string }) {
           autoComplete="one-time-code"
           maxLength={7}
           required
-          aria-label={t('a11y.code')}
           className="field--code"
           error={state.fieldErrors?.code}
-        />
-        <FormMessage status={state.status} message={state.message} />
-        <Button type="submit" disabled={pending}>
-          {t('common.next')}
-        </Button>
-      </form>
-      <RestartButton />
-    </>
-  );
-}
-
-function TotpStep() {
-  const [state, action, pending] = useActionState(verifyTotp, initialFormState);
-  return (
-    <>
-      <form action={action} className="sign-in__form" noValidate>
-        <h1 className="sign-in__title">{t('backoffice.signIn.totp.title')}</h1>
-        <p className="sign-in__body">{t('backoffice.signIn.totp.body')}</p>
-        <TextInput
-          label={t('backoffice.signIn.totp.label')}
-          name="totpCode"
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          maxLength={7}
-          required
-          className="field--code"
-          error={state.fieldErrors?.totpCode}
         />
         <FormMessage status={state.status} message={state.message} />
         <Button type="submit" disabled={pending}>

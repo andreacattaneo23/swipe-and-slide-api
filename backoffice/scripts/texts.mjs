@@ -50,7 +50,19 @@ export const SHARED_KEYS = [
   'reason.photos',
   'deck.bio',
   'offsite.under10',
+  'offsite.attendees.over',
+  'offsite.attendees.label',
+  'offsite.cancelled',
+  'offsite.completed',
   'offsite1.attendees',
+  'common.add',
+  'report.fakeProfile',
+  'report.inappropriatePhotos',
+  'report.harassment',
+  'report.spamScam',
+  'report.possibleMinor',
+  'report.worksAtMyCompany',
+  'report.other',
 ];
 
 const content = fs.readFileSync(path.join(docs, SOURCE));

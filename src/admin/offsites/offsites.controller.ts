@@ -1,4 +1,16 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+  UploadedFile,
+  UseInterceptors,
+  HttpCode,
+} from '@nestjs/common';
 import {
   ApiHeader,
   ApiOkResponse,
@@ -7,6 +19,8 @@ import {
   ApiTags,
   OmitType,
   PartialType,
+  ApiBody,
+  ApiConsumes,
 } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -25,7 +39,19 @@ import {
 import { OffsiteRecord, OffsitesService } from '../../domain/offsites/offsites.service';
 import { OperatorContext } from '../auth/operator-context';
 import { CurrentOperator, OperatorRoles } from '../auth/operator-roles.decorator';
-import { ExplanationDto } from '../common/admin.dto';
+import { ExplanationDto, OptionalExplanationDto } from '../common/admin.dto';
+import { ApiError } from '../../infra/http/api-error';
+import { FileInterceptor } from '@nestjs/platform-express';
+
+const COVER_MAX_BYTES = 5 * 1024 * 1024;
+const COVER_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+/** File caricato (multer), solo i campi usati. */
+interface UploadedCover {
+  buffer: Buffer;
+  mimetype: string;
+  size: number;
+}
 import { by } from '../companies/companies.controller';
 
 export class OffsiteListQueryDto {
@@ -43,7 +69,7 @@ export class OffsiteListQueryDto {
   limit?: number;
 }
 
-export class CreateOffsiteDto extends ExplanationDto {
+export class CreateOffsiteDto extends OptionalExplanationDto {
   @ApiProperty({ maxLength: 120 }) @IsString() @Length(1, 120) title: string;
   @ApiProperty({ maxLength: 4000 }) @IsString() @MaxLength(4000) description: string;
   @ApiProperty({ maxLength: 120 }) @IsString() @Length(1, 120) venueName: string;
@@ -59,14 +85,10 @@ export class CreateOffsiteDto extends ExplanationDto {
   isDemo?: boolean;
 }
 
+/** Modifica: motivazione facoltativa come nella creazione (D238). */
 export class UpdateOffsiteDto extends PartialType(
-  OmitType(CreateOffsiteDto, ['explanation', 'isDemo'] as const),
-) {
-  @ApiProperty({ minLength: 3, maxLength: 500 })
-  @IsString()
-  @Length(3, 500)
-  explanation: string;
-}
+  OmitType(CreateOffsiteDto, ['isDemo'] as const),
+) {}
 
 export class OffsiteDto {
   @ApiProperty() id: string;
@@ -89,6 +111,8 @@ export class OffsiteDto {
     description: 'Iscritti arrotondati: 0 = "meno di 10", poi la decina per difetto (D167)',
   })
   attendeesRounded: number;
+  @ApiPropertyOptional({ nullable: true, type: String, description: 'URL firmato della copertina' })
+  coverUrl: string | null;
 }
 
 /** Offsite (D150): solo l'Amministratore; mai l'elenco né il numero esatto degli iscritti. */
@@ -141,9 +165,30 @@ export class OffsitesController {
   publish(
     @CurrentOperator() operator: OperatorContext,
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() body: ExplanationDto,
+    @Body() body: OptionalExplanationDto,
   ): Promise<OffsiteRecord> {
     return this.offsites.publish(id, by(operator, body));
+  }
+
+  /** Copertina in `multipart/form-data` (campo `file`): JPEG, PNG o WebP fino a 5 MB. */
+  @Post(':id/cover')
+  @OperatorRoles('admin')
+  @HttpCode(200)
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: { type: 'object', properties: { file: { type: 'string', format: 'binary' } } },
+  })
+  @ApiOkResponse({ type: OffsiteDto })
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: COVER_MAX_BYTES, files: 1 } }))
+  cover(
+    @CurrentOperator() operator: OperatorContext,
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile() file: UploadedCover | undefined,
+  ): Promise<OffsiteRecord> {
+    if (!file || !COVER_TYPES.includes(file.mimetype)) {
+      throw ApiError.badRequest('validation', { field: 'cover' });
+    }
+    return this.offsites.setCover(id, file.buffer, file.mimetype, by(operator, {}));
   }
 
   @Post(':id/cancellation')

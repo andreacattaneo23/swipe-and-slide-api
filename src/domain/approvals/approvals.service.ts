@@ -1,23 +1,22 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { and, eq, sql } from 'drizzle-orm';
 import { DATABASE, Database, Executor } from '../../infra/database/database';
-import { photos, profileReviews, users } from '../../infra/database/schema';
+import { photos, profileReviews, reviewRejectionReason, users } from '../../infra/database/schema';
 import { AuditService } from '../../infra/audit/audit.service';
+import { CryptoService } from '../../infra/crypto/crypto.service';
+import { OBJECT_STORAGE, ObjectStorage } from '../../infra/storage/object-storage';
+import { photoKeys } from '../photos/photos.service';
+import { NoticesService } from '../safety/notices.service';
+import { UserEvents } from '../safety/user-events';
 import { ApiError } from '../../infra/http/api-error';
 import { OperatorAction } from '../companies/companies.service';
 
 /**
- * Motivi predefiniti del rifiuto (D197, AF "Rifiuti e tentativi") [Proposta: codici].
- * Il testo libero obbligatorio dice cosa correggere (D142).
+ * Motivi predefiniti del rifiuto (D142, D197, AF "Rifiuti e tentativi"): un solo elenco per
+ * backend e backoffice, fissato nell'enum `review_rejection_reason` del database e pubblicato nel
+ * contratto OpenAPI. Il testo libero obbligatorio dice cosa correggere.
  */
-export const REJECTION_REASONS = [
-  'inappropriate_photos',
-  'photos_without_person',
-  'fake_profile',
-  'text_not_allowed',
-  'reveals_company_or_clients',
-  'other',
-] as const;
+export const REJECTION_REASONS = reviewRejectionReason.enumValues;
 export type RejectionReason = (typeof REJECTION_REASONS)[number];
 
 export interface QueueItem {
@@ -35,11 +34,13 @@ export interface QueueItem {
   lookingFor: string | null;
   bio: string | null;
   companyName: string | null;
+  /** URL firmato della prima foto, pochi minuti. */
+  photoUrl: string | null;
 }
 
 export interface ReviewDetail extends QueueItem {
   outcome: 'pending' | 'approved' | 'rejected';
-  photos: { id: string; position: number; status: string }[];
+  photos: { id: string; position: number; status: string; url: string }[];
   previousAttempts: { attempt: number; reason: string | null; explanation: string | null }[];
 }
 
@@ -56,6 +57,10 @@ export class ApprovalsService {
   constructor(
     @Inject(DATABASE) private readonly db: Database,
     private readonly audit: AuditService,
+    private readonly notices: NoticesService,
+    private readonly crypto: CryptoService,
+    @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
+    private readonly events: UserEvents,
   ) {}
 
   /** Prima presentazione o ripresentazione: nuova revisione con scadenza a 24 ore. */
@@ -83,7 +88,20 @@ export class ApprovalsService {
          ${params.after ? sql`and submitted_at > ${params.after}::timestamptz` : sql``}
        order by submitted_at, review_id
        limit ${params.limit}`);
-    return rows.rows.map(toQueueItem);
+    const items = rows.rows.map(toQueueItem);
+    if (!items.length) return items;
+    const first = await this.db.execute<{ user_id: string; storage_key: string }>(sql`
+      select distinct on (user_id) user_id, storage_key from photos
+       where user_id = any (${`{${items.map((item) => item.userId).join(',')}}`}::uuid[])
+         and status in ('pending_approval', 'approved')
+       order by user_id, position`);
+    for (const item of items) {
+      const photo = first.rows.find((row) => row.user_id === item.userId);
+      item.photoUrl = photo
+        ? (await this.storage.signedGetUrl(photoKeys(photo.storage_key).large, 300)).url
+        : null;
+    }
+    return items;
   }
 
   async detail(reviewId: string): Promise<ReviewDetail> {
@@ -93,7 +111,12 @@ export class ApprovalsService {
     const row = result.rows[0];
     if (!row) throw ApiError.notFound();
     const userPhotos = await this.db
-      .select({ id: photos.id, position: photos.position, status: photos.status })
+      .select({
+        id: photos.id,
+        position: photos.position,
+        status: photos.status,
+        storageKey: photos.storageKey,
+      })
       .from(photos)
       .where(eq(photos.userId, row.user_id))
       .orderBy(photos.position);
@@ -109,14 +132,20 @@ export class ApprovalsService {
     return {
       ...toQueueItem(row),
       outcome: row.outcome,
-      photos: userPhotos,
+      photos: await Promise.all(
+        userPhotos.map(async ({ storageKey, ...photo }) => ({
+          ...photo,
+          url: (await this.storage.signedGetUrl(photoKeys(storageKey).large, 300)).url,
+        })),
+      ),
+      photoUrl: null,
       previousAttempts: previous,
     };
   }
 
   /** Approvazione: revisione, foto in attesa e account attivo nella stessa transazione. */
   async approve(reviewId: string, by: OperatorAction): Promise<void> {
-    await this.db.transaction(async (tx) => {
+    const userId = await this.db.transaction(async (tx) => {
       const review = await this.lockPending(tx, reviewId);
       await tx
         .update(profileReviews)
@@ -143,7 +172,9 @@ export class ApprovalsService {
         },
         tx,
       );
+      return review.userId;
     });
+    await this.events.emit(userId, 'approval.approved');
   }
 
   /**
@@ -157,9 +188,11 @@ export class ApprovalsService {
     by: OperatorAction,
   ): Promise<{ attempt: number; blocked: boolean }> {
     if (!input.explanation.trim()) throw ApiError.badRequest('approval.explanation.required');
-    return this.db.transaction(async (tx) => {
+    const result = await this.db.transaction(async (tx) => {
       const review = await this.lockPending(tx, reviewId);
       const third = review.attempt >= 3;
+      // Collegamento del ricorso anche dopo la cancellazione (D142): solo l'impronta del codice
+      const appealCode = third ? this.crypto.randomToken(24) : null;
       await tx
         .update(profileReviews)
         .set({
@@ -169,6 +202,7 @@ export class ApprovalsService {
           reason: input.reason,
           explanation: input.explanation.trim(),
           appealDeadlineAt: third ? sql`now() + interval '7 days'` : null,
+          appealCodeHash: appealCode ? this.crypto.hash('appeal-code', appealCode) : null,
         })
         .where(eq(profileReviews.id, reviewId));
       await tx
@@ -196,6 +230,7 @@ export class ApprovalsService {
         const blocked = await tx.execute<{ written: number }>(
           sql`select block_third_rejection(${reviewId}::uuid) as written`,
         );
+        await tx.execute(sql`select limit_user_sessions(${review.userId}::uuid)`);
         await this.audit.write(
           {
             type: 'action',
@@ -210,8 +245,17 @@ export class ApprovalsService {
           tx,
         );
       }
-      return { attempt: review.attempt, blocked: third };
+      // Avviso neutro, senza la motivazione, che si legge solo nell'app (D142, RC-163)
+      await this.notices.toUser(
+        review.userId,
+        third ? 'approval.blocked' : 'approval.rejected',
+        third ? { appealCode } : {},
+        tx,
+      );
+      return { attempt: review.attempt, blocked: third, userId: review.userId };
     });
+    await this.events.emit(result.userId, 'approval.rejected');
+    return { attempt: result.attempt, blocked: result.blocked };
   }
 
   private async lockPending(
@@ -265,5 +309,6 @@ function toQueueItem(row: QueueRow): QueueItem {
     lookingFor: row.looking_for,
     bio: row.bio,
     companyName: row.company_name,
+    photoUrl: null,
   };
 }

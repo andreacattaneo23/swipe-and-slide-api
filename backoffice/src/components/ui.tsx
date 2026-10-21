@@ -154,6 +154,28 @@ export function Select({
   );
 }
 
+/** Casella di spunta con l'etichetta accanto e un suggerimento facoltativo. */
+export function Checkbox({
+  label,
+  hint,
+  className,
+  ...props
+}: InputHTMLAttributes<HTMLInputElement> & { label: ReactNode; hint?: ReactNode }) {
+  const id = useId();
+  const hintId = hint ? `${id}-hint` : undefined;
+  return (
+    <div className={['checkbox', className].filter(Boolean).join(' ')}>
+      <input id={id} type="checkbox" aria-describedby={hintId} {...props} />
+      <label htmlFor={id}>{label}</label>
+      {hint ? (
+        <p className="field__hint" id={hintId}>
+          {hint}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 /** Etichetta di un campo obbligatorio come nei mockup: "Motivazione obbligatoria". */
 export function RequiredLabel({ label, note }: { label: string; note: string }) {
   return (

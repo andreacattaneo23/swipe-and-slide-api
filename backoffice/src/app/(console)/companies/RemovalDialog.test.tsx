@@ -32,7 +32,7 @@ describe('finestra di rimozione con conferma rafforzata (mockup 18b, D93)', () =
     await user.clear(name);
     await user.type(name, 'Studio Fittizio');
     expect(confirm).toBeEnabled();
-    expect(screen.getByLabelText('Codice del secondo fattore')).toBeRequired();
+    expect(screen.queryByLabelText('Codice del secondo fattore')).not.toBeInTheDocument();
     expect(screen.getByLabelText(/Motivazione/)).toBeRequired();
   });
 });

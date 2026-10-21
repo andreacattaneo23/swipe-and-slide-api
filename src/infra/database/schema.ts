@@ -29,6 +29,12 @@ export const accountStatus = pgEnum('account_status', [
   'suspended',
   'deleted',
 ]);
+export const reverificationReasonEnum = pgEnum('reverification_reason', [
+  'expiry',
+  'ad_hoc',
+  'email_bounced',
+  'domain_removed',
+]);
 export const companyStatus = pgEnum('company_status', ['active', 'merged', 'removing']);
 export const workEmailStatus = pgEnum('work_email_status', ['active', 'historical']);
 export const consentType = pgEnum('consent_type', ['art9', 'terms', 'p7_declaration']);
@@ -124,6 +130,29 @@ export const auditAction = pgEnum('audit_action', [
   'review_code_wrong',
   'provider_token_rejected',
   'refresh_token_reused',
+  // Team B3 (migrazione 0300)
+  'report_decided',
+  'sanction_revoked',
+  'account_reactivated',
+  'age_verification_requested',
+  'precautionary_suspension_started',
+  'audit_exported',
+  'waitlist_answered',
+  'directory_alert_closed',
+  'operator_created',
+  'operator_updated',
+  'review_window_closed',
+  'demo_data_reset',
+  'content_removed',
+  'removal_completed',
+  'job_completed',
+]);
+export const reviewRejectionReason = pgEnum('review_rejection_reason', [
+  'non_compliant_photo',
+  'inappropriate_photos',
+  'fake_profile',
+  'disallowed_text',
+  'reveals_company_or_clients',
 ]);
 export const otpPurpose = pgEnum('otp_purpose', [
   'login',
@@ -141,7 +170,6 @@ export const operators = pgTable('operators', {
   email: text('email').notNull(),
   name: text('name').notNull(),
   roles: operatorRole('roles').array().notNull(),
-  encryptedTotpSecret: text('encrypted_totp_secret').notNull(),
   status: text('status').notNull(),
   createdAt: tz('created_at').notNull().defaultNow(),
 });
@@ -151,7 +179,6 @@ export const operatorSessions = pgTable('operator_sessions', {
   operatorId: uuid('operator_id').notNull(),
   createdAt: tz('created_at').notNull().defaultNow(),
   expiresAt: tz('expires_at').notNull(),
-  lastTotpAt: tz('last_totp_at').notNull(),
   revokedAt: tz('revoked_at'),
 });
 
@@ -195,9 +222,12 @@ export const users = pgTable('users', {
   openSpaceSince: tz('open_space_since'),
   openSpacePromptAt: tz('open_space_prompt_at'),
   reverificationDueAt: tz('reverification_due_at'),
+  reverificationReason: reverificationReasonEnum('reverification_reason'),
+  adHocReverificationAt: tz('ad_hoc_reverification_at'),
   deletionScheduledAt: tz('deletion_scheduled_at'),
   deletionRequestedAt: tz('deletion_requested_at'),
   excludedCompaniesNoticeAt: tz('excluded_companies_notice_at'),
+  lastSeenOn: date('last_seen_on', { mode: 'string' }),
   createdAt: tz('created_at').notNull().defaultNow(),
 });
 
@@ -283,6 +313,7 @@ export const photos = pgTable('photos', {
   status: photoStatus('status').notNull(),
   uploadedAt: tz('uploaded_at').notNull().defaultNow(),
   checkedAt: tz('checked_at'),
+  teamAlertAt: tz('team_alert_at'),
 });
 
 export const offsites = pgTable('offsites', {
@@ -314,9 +345,12 @@ export const profileReviews = pgTable('profile_reviews', {
   outcome: reviewOutcome('outcome').notNull().default('pending'),
   decidedBy: uuid('decided_by'),
   decidedAt: tz('decided_at'),
-  reason: text('reason'),
+  reason: reviewRejectionReason('reason'),
   explanation: text('explanation'),
   appealDeadlineAt: tz('appeal_deadline_at'),
+  appealCodeHash: text('appeal_code_hash'),
+  teamAlertAt: tz('team_alert_at'),
+  deletionNoticeAt: tz('deletion_notice_at'),
 });
 
 export const blockedHashes = pgTable('blocked_hashes', {

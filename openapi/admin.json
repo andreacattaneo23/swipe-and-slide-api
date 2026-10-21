@@ -20,6 +20,652 @@
         ],
         "type": "object"
       },
+      "AgeDocumentDto": {
+        "properties": {
+          "documentUrl": {
+            "description": "URL firmato di 5 minuti",
+            "nullable": true,
+            "type": "string"
+          },
+          "expiresAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "requested": {
+            "type": "boolean"
+          },
+          "requestedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "uploaded": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "requested",
+          "uploaded"
+        ],
+        "type": "object"
+      },
+      "AgeDto": {
+        "properties": {
+          "ageYears": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "ageYears"
+        ],
+        "type": "object"
+      },
+      "AgeOutcomeDto": {
+        "properties": {
+          "explanation": {
+            "example": "Nuova società di consulenza approvata dal team",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "adult",
+              "minor"
+            ],
+            "type": "string"
+          },
+          "userExplanation": {
+            "description": "Per l’utente, se minorenne (espulsione)",
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "explanation",
+          "outcome"
+        ],
+        "type": "object"
+      },
+      "AppealDecisionDto": {
+        "properties": {
+          "explanation": {
+            "example": "Nuova società di consulenza approvata dal team",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "outcome": {
+            "description": "`upheld` (nome del backoffice) è sinonimo di `accepted`",
+            "enum": [
+              "accepted",
+              "upheld",
+              "rejected"
+            ],
+            "type": "string"
+          },
+          "userExplanation": {
+            "description": "Risposta motivata per l’utente; senza, si usa la motivazione",
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "explanation",
+          "outcome"
+        ],
+        "type": "object"
+      },
+      "AppealDetailDto": {
+        "properties": {
+          "canDecide": {
+            "type": "boolean"
+          },
+          "decidedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "decidedByMe": {
+            "description": "L’operatore ha deciso la sanzione: serve un’altra persona (D88)",
+            "type": "boolean"
+          },
+          "decisionExplanation": {
+            "nullable": true,
+            "type": "string"
+          },
+          "dueAt": {
+            "description": "Risposta entro 7 giorni (D75)",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "sanction",
+              "third_rejection"
+            ],
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "pending",
+              "accepted",
+              "rejected"
+            ],
+            "type": "string"
+          },
+          "responseExplanation": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reviewedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "sanctionType": {
+            "nullable": true,
+            "type": "string"
+          },
+          "severeCase": {
+            "nullable": true,
+            "type": "string"
+          },
+          "subject": {
+            "description": "Tipo di sanzione o `third_rejection` (D142)",
+            "type": "string"
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "userId": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "submittedAt",
+          "dueAt",
+          "outcome",
+          "decidedByMe",
+          "subject",
+          "text",
+          "canDecide"
+        ],
+        "type": "object"
+      },
+      "AppealSummaryDto": {
+        "properties": {
+          "decidedByMe": {
+            "description": "L’operatore ha deciso la sanzione: serve un’altra persona (D88)",
+            "type": "boolean"
+          },
+          "dueAt": {
+            "description": "Risposta entro 7 giorni (D75)",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "sanction",
+              "third_rejection"
+            ],
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "pending",
+              "accepted",
+              "rejected"
+            ],
+            "type": "string"
+          },
+          "sanctionType": {
+            "nullable": true,
+            "type": "string"
+          },
+          "subject": {
+            "description": "Tipo di sanzione o `third_rejection` (D142)",
+            "type": "string"
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "submittedAt",
+          "dueAt",
+          "outcome",
+          "decidedByMe",
+          "subject"
+        ],
+        "type": "object"
+      },
+      "AuditEntryDto": {
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "at": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "details": {
+            "description": "Solo conteggi e codici (D112)",
+            "type": "object"
+          },
+          "explanation": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "operatorId": {
+            "nullable": true,
+            "type": "string"
+          },
+          "operatorName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "subjectRef": {
+            "description": "`tipo:identificativo interno` dell’oggetto (D112)",
+            "nullable": true,
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "action",
+              "security"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "at",
+          "type",
+          "action",
+          "details"
+        ],
+        "type": "object"
+      },
+      "BirthDateDto": {
+        "properties": {
+          "birthDate": {
+            "example": "1992-04-12",
+            "type": "string"
+          },
+          "explanation": {
+            "example": "Nuova società di consulenza approvata dal team",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "explanation",
+          "birthDate"
+        ],
+        "type": "object"
+      },
+      "CaseDecisionDto": {
+        "properties": {
+          "decision": {
+            "description": "`dismiss` e `remove_content` sono sinonimi di `dismissed` e `content_removed`",
+            "enum": [
+              "dismissed",
+              "content_removed",
+              "match_closed",
+              "warning",
+              "disciplinary_suspension",
+              "expulsion",
+              "dismiss",
+              "remove_content"
+            ],
+            "type": "string"
+          },
+          "explanation": {
+            "example": "Nuova società di consulenza approvata dal team",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "fields": {
+            "items": {
+              "enum": [
+                "bio",
+                "looking_for",
+                "first_name",
+                "last_name"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "photoIds": {
+            "description": "Foto da respingere",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "severeCase": {
+            "description": "Caso grave: espulsione immediata",
+            "enum": [
+              "threats_violence",
+              "minor_content",
+              "fraud",
+              "stalking",
+              "colleague_rule_evasion",
+              "false_statements"
+            ],
+            "type": "string"
+          },
+          "userExplanation": {
+            "description": "Motivazione per l’utente: obbligatoria per avviso, sospensione ed espulsione",
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "explanation",
+          "decision"
+        ],
+        "type": "object"
+      },
+      "CasePhotoDto": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "position": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string"
+          },
+          "url": {
+            "description": "URL firmato di pochi minuti",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "position",
+          "status"
+        ],
+        "type": "object"
+      },
+      "CaseReportDto": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "note": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "CaseSubjectDto": {
+        "properties": {
+          "ageYears": {
+            "nullable": true,
+            "type": "number"
+          },
+          "bio": {
+            "description": "Bio copiata nel caso",
+            "nullable": true,
+            "type": "string"
+          },
+          "firstName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/CasePhotoDto"
+            },
+            "type": "array"
+          },
+          "status": {
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId",
+          "status",
+          "photos"
+        ],
+        "type": "object"
+      },
+      "CaseViewDto": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "dueAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "flaggedMessages": {
+            "items": {
+              "$ref": "#/components/schemas/FlaggedMessageDto"
+            },
+            "type": "array"
+          },
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "report",
+              "photo"
+            ],
+            "type": "string"
+          },
+          "photo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CasePhotoDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          },
+          "priorSanctions": {
+            "type": "number"
+          },
+          "reason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reports": {
+            "items": {
+              "$ref": "#/components/schemas/CaseReportDto"
+            },
+            "type": "array"
+          },
+          "reportsCount": {
+            "type": "number"
+          },
+          "severity": {
+            "enum": [
+              "severe",
+              "standard"
+            ],
+            "type": "string"
+          },
+          "subject": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CaseSubjectDto"
+              }
+            ],
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "severity",
+          "reportsCount",
+          "createdAt",
+          "reports",
+          "flaggedMessages",
+          "priorSanctions"
+        ],
+        "type": "object"
+      },
+      "ChangePreviewDto": {
+        "properties": {
+          "likesToDelete": {
+            "description": "Like in attesa da cancellare",
+            "type": "number"
+          },
+          "matchesToRevoke": {
+            "description": "Match senza messaggi da revocare tra nuovi colleghi",
+            "type": "number"
+          },
+          "similarCompanies": {
+            "description": "Nomi di aziende simili già presenti",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "usersMoving": {
+            "description": "Utenti che cambiano azienda",
+            "type": "number"
+          }
+        },
+        "required": [
+          "usersMoving",
+          "matchesToRevoke",
+          "likesToDelete",
+          "similarCompanies"
+        ],
+        "type": "object"
+      },
+      "ChatReadDto": {
+        "properties": {
+          "confirmName": {
+            "description": "Identificativo del match digitato per conferma (D187, D244)",
+            "type": "string"
+          },
+          "explanation": {
+            "example": "Nuova società di consulenza approvata dal team",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "from": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "reason": {
+            "enum": [
+              "authority_request",
+              "security_investigation"
+            ],
+            "type": "string"
+          },
+          "reference": {
+            "description": "Riferimento della richiesta delle autorità o del caso",
+            "type": "string"
+          },
+          "to": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "explanation",
+          "reason",
+          "reference",
+          "from",
+          "to",
+          "confirmName"
+        ],
+        "type": "object"
+      },
+      "ChatReadMessageDto": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "senderId": {
+            "type": "string"
+          },
+          "sentAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "text": {
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "senderId",
+          "sentAt"
+        ],
+        "type": "object"
+      },
+      "CityDto": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "provinceCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "provinceCode"
+        ],
+        "type": "object"
+      },
       "CompanyDto": {
         "properties": {
           "createdAt": {
@@ -41,6 +687,12 @@
           "name": {
             "type": "string"
           },
+          "removalFinalAt": {
+            "description": "Fine dell’intervallo (D111)",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
           "status": {
             "enum": [
               "active",
@@ -48,6 +700,11 @@
               "removing"
             ],
             "type": "string"
+          },
+          "usersCount": {
+            "description": "Utenti attivi in forma aggregata, `null` sotto 10 (D89)",
+            "nullable": true,
+            "type": "number"
           }
         },
         "required": [
@@ -57,6 +714,86 @@
           "isDemo",
           "domains",
           "createdAt"
+        ],
+        "type": "object"
+      },
+      "ConfigLimitDto": {
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "max": {
+            "type": "number"
+          },
+          "min": {
+            "type": "number"
+          },
+          "unit": {
+            "enum": [
+              "count",
+              "hours",
+              "days"
+            ],
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "key",
+          "value",
+          "min",
+          "max",
+          "unit"
+        ],
+        "type": "object"
+      },
+      "ConfigListDto": {
+        "properties": {
+          "items": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "key": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "items"
+        ],
+        "type": "object"
+      },
+      "ConfigValueDto": {
+        "properties": {
+          "explanation": {
+            "example": "Nuova società di consulenza approvata dal team",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "value": {
+            "description": "Elenco di testi (parole del filtro, soglie delle foto)",
+            "type": "object"
+          }
+        },
+        "required": [
+          "explanation",
+          "value"
+        ],
+        "type": "object"
+      },
+      "CountDto": {
+        "properties": {
+          "count": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "count"
         ],
         "type": "object"
       },
@@ -115,7 +852,6 @@
             "type": "string"
           },
           "explanation": {
-            "example": "Nuova società di consulenza approvata dal team",
             "maxLength": 500,
             "minLength": 3,
             "type": "string"
@@ -143,7 +879,6 @@
           }
         },
         "required": [
-          "explanation",
           "title",
           "description",
           "venueName",
@@ -151,6 +886,77 @@
           "cityId",
           "startsAt",
           "endsAt"
+        ],
+        "type": "object"
+      },
+      "DemoAccountDto": {
+        "properties": {
+          "companyName": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "maskedEmail": {
+            "description": "Mascherata (D90)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "firstName",
+          "companyName",
+          "maskedEmail"
+        ],
+        "type": "object"
+      },
+      "DirectoryAlertDto": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "reportedCompany": {
+            "description": "Azienda della persona segnalata",
+            "type": "string"
+          },
+          "reportedCompanyId": {
+            "type": "string"
+          },
+          "reporterCompany": {
+            "description": "Azienda di chi segnala",
+            "type": "string"
+          },
+          "reporterCompanyId": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "open",
+              "closed"
+            ],
+            "type": "string"
+          },
+          "windowEndsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "windowStartsAt": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reporterCompany",
+          "reportedCompany",
+          "reporterCompanyId",
+          "reportedCompanyId",
+          "windowStartsAt",
+          "windowEndsAt",
+          "status"
         ],
         "type": "object"
       },
@@ -168,6 +974,31 @@
         ],
         "type": "object"
       },
+      "FlaggedMessageDto": {
+        "properties": {
+          "fromReported": {
+            "description": "Scritto dalla persona segnalata",
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string"
+          },
+          "sentAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fromReported",
+          "text"
+        ],
+        "type": "object"
+      },
       "HealthDto": {
         "properties": {
           "status": {
@@ -177,6 +1008,156 @@
         },
         "required": [
           "status"
+        ],
+        "type": "object"
+      },
+      "LimitUpdateDto": {
+        "properties": {
+          "explanation": {
+            "example": "Nuova società di consulenza approvata dal team",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "explanation",
+          "value"
+        ],
+        "type": "object"
+      },
+      "MergeDto": {
+        "properties": {
+          "confirmName": {
+            "description": "Nome o identificativo dell'oggetto digitato per conferma",
+            "type": "string"
+          },
+          "explanation": {
+            "example": "Nuova società di consulenza approvata dal team",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "targetCompanyId": {
+            "description": "Azienda che resta; il nome da digitare è quello dell’assorbita",
+            "type": "string"
+          }
+        },
+        "required": [
+          "explanation",
+          "confirmName",
+          "targetCompanyId"
+        ],
+        "type": "object"
+      },
+      "MoveDomainDto": {
+        "properties": {
+          "confirmName": {
+            "description": "Nome o identificativo dell'oggetto digitato per conferma",
+            "type": "string"
+          },
+          "explanation": {
+            "example": "Nuova società di consulenza approvata dal team",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "targetCompanyId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "explanation",
+          "confirmName",
+          "targetCompanyId"
+        ],
+        "type": "object"
+      },
+      "NewOperatorDto": {
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "explanation": {
+            "example": "Nuova società di consulenza approvata dal team",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "roles": {
+            "items": {
+              "enum": [
+                "admin",
+                "moderator",
+                "support"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "explanation",
+          "email",
+          "name",
+          "roles"
+        ],
+        "type": "object"
+      },
+      "NewPhotoDto": {
+        "properties": {
+          "dueAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "firstName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "minutesLeft": {
+            "type": "number"
+          },
+          "photo": {
+            "$ref": "#/components/schemas/CasePhotoDto"
+          },
+          "position": {
+            "type": "number"
+          },
+          "submittedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "uploadedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "url": {
+            "description": "URL firmato di pochi minuti",
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "userId",
+          "position",
+          "uploadedAt",
+          "submittedAt",
+          "photo",
+          "dueAt",
+          "minutesLeft",
+          "url"
         ],
         "type": "object"
       },
@@ -199,6 +1180,11 @@
             "type": "string"
           },
           "coverKey": {
+            "nullable": true,
+            "type": "string"
+          },
+          "coverUrl": {
+            "description": "URL firmato della copertina",
             "nullable": true,
             "type": "string"
           },
@@ -272,6 +1258,57 @@
         ],
         "type": "object"
       },
+      "OperatorCreatedDto": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "OperatorDto": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "roles": {
+            "items": {
+              "enum": [
+                "admin",
+                "moderator",
+                "support"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "disabled"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "roles",
+          "status",
+          "createdAt"
+        ],
+        "type": "object"
+      },
       "OperatorEmailDto": {
         "properties": {
           "email": {
@@ -287,10 +1324,6 @@
       "OperatorMeDto": {
         "properties": {
           "id": {
-            "type": "string"
-          },
-          "lastTotpAt": {
-            "format": "date-time",
             "type": "string"
           },
           "name": {
@@ -311,8 +1344,7 @@
         "required": [
           "id",
           "name",
-          "roles",
-          "lastTotpAt"
+          "roles"
         ],
         "type": "object"
       },
@@ -322,6 +1354,9 @@
             "format": "date-time",
             "type": "string"
           },
+          "operator": {
+            "$ref": "#/components/schemas/SessionOperatorDto"
+          },
           "token": {
             "description": "Token della sessione, da inviare nell'intestazione `X-Operator-Token`",
             "type": "string"
@@ -329,31 +1364,90 @@
         },
         "required": [
           "token",
-          "expiresAt"
+          "expiresAt",
+          "operator"
+        ],
+        "type": "object"
+      },
+      "OperatorUpdateDto": {
+        "properties": {
+          "explanation": {
+            "example": "Nuova società di consulenza approvata dal team",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "roles": {
+            "items": {
+              "enum": [
+                "admin",
+                "moderator",
+                "support"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "status": {
+            "enum": [
+              "active",
+              "disabled"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "explanation"
         ],
         "type": "object"
       },
       "OperatorVerifyDto": {
         "properties": {
           "code": {
-            "description": "Codice OTP ricevuto via email",
+            "description": "Codice OTP ricevuto via email (D244)",
             "example": "123456",
             "type": "string"
           },
           "email": {
             "example": "operatore@example.invalid",
             "type": "string"
-          },
-          "totp": {
-            "description": "Codice TOTP dell'app di autenticazione (D88)",
-            "example": "654321",
-            "type": "string"
           }
         },
         "required": [
           "email",
-          "code",
-          "totp"
+          "code"
+        ],
+        "type": "object"
+      },
+      "OptionalExplanationDto": {
+        "properties": {
+          "explanation": {
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "PhotoOutcomeDto": {
+        "properties": {
+          "explanation": {
+            "example": "Nuova società di consulenza approvata dal team",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "approved",
+              "rejected"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "explanation",
+          "outcome"
         ],
         "type": "object"
       },
@@ -375,6 +1469,60 @@
           "attempt",
           "reason",
           "explanation"
+        ],
+        "type": "object"
+      },
+      "QueueEntryDto": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "dueAt": {
+            "description": "Vuota per le dimostrative",
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "isDemo": {
+            "type": "boolean"
+          },
+          "kind": {
+            "enum": [
+              "report",
+              "photo"
+            ],
+            "type": "string"
+          },
+          "minutesLeft": {
+            "nullable": true,
+            "type": "number"
+          },
+          "reason": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reportsCount": {
+            "type": "number"
+          },
+          "severity": {
+            "enum": [
+              "severe",
+              "standard"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "severity",
+          "createdAt",
+          "isDemo",
+          "reportsCount"
         ],
         "type": "object"
       },
@@ -416,6 +1564,11 @@
           "minutesLeft": {
             "description": "Minuti alle 24 ore, negativi se in ritardo (D144)",
             "type": "number"
+          },
+          "photoUrl": {
+            "description": "URL firmato, pochi minuti",
+            "nullable": true,
+            "type": "string"
           },
           "practiceArea": {
             "nullable": true,
@@ -459,12 +1612,11 @@
           },
           "reason": {
             "enum": [
+              "non_compliant_photo",
               "inappropriate_photos",
-              "photos_without_person",
               "fake_profile",
-              "text_not_allowed",
-              "reveals_company_or_clients",
-              "other"
+              "disallowed_text",
+              "reveals_company_or_clients"
             ],
             "type": "string"
           },
@@ -498,6 +1650,33 @@
         ],
         "type": "object"
       },
+      "RemovalPreviewDto": {
+        "properties": {
+          "accountsCount": {
+            "description": "Account coinvolti (D111)",
+            "type": "number"
+          },
+          "companyId": {
+            "type": "string"
+          },
+          "domains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "companyId",
+          "name",
+          "domains",
+          "accountsCount"
+        ],
+        "type": "object"
+      },
       "RenameCompanyDto": {
         "properties": {
           "explanation": {
@@ -514,6 +1693,75 @@
         "required": [
           "explanation",
           "name"
+        ],
+        "type": "object"
+      },
+      "ReporterSanctionDto": {
+        "properties": {
+          "explanation": {
+            "example": "Nuova società di consulenza approvata dal team",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "warning",
+              "disciplinary_suspension",
+              "expulsion"
+            ],
+            "type": "string"
+          },
+          "userExplanation": {
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "explanation",
+          "type",
+          "userExplanation"
+        ],
+        "type": "object"
+      },
+      "RevealedEmailDto": {
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "personal",
+              "work"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "email"
+        ],
+        "type": "object"
+      },
+      "RevealEmailDto": {
+        "properties": {
+          "explanation": {
+            "example": "Nuova società di consulenza approvata dal team",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "personal",
+              "work"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "explanation",
+          "kind"
         ],
         "type": "object"
       },
@@ -570,6 +1818,11 @@
             },
             "type": "array"
           },
+          "photoUrl": {
+            "description": "URL firmato, pochi minuti",
+            "nullable": true,
+            "type": "string"
+          },
           "practiceArea": {
             "nullable": true,
             "type": "string"
@@ -621,20 +1874,65 @@
           },
           "status": {
             "type": "string"
+          },
+          "url": {
+            "description": "URL firmato di pochi minuti",
+            "type": "string"
           }
         },
         "required": [
           "id",
           "position",
-          "status"
+          "status",
+          "url"
         ],
         "type": "object"
       },
-      "StrongConfirmationDto": {
+      "ReviewWindowDto": {
         "properties": {
-          "confirmName": {
-            "description": "Nome dell'oggetto digitato per conferma",
+          "closedAt": {
+            "format": "date-time",
+            "nullable": true,
             "type": "string"
+          },
+          "endsAt": {
+            "description": "Fine prevista (al massimo 14 giorni)",
+            "format": "date-time",
+            "type": "string"
+          },
+          "failedAttempts": {
+            "type": "number"
+          },
+          "id": {
+            "type": "string"
+          },
+          "openedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "store": {
+            "enum": [
+              "apple",
+              "google"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "store",
+          "openedAt",
+          "endsAt",
+          "failedAttempts"
+        ],
+        "type": "object"
+      },
+      "ReviewWindowInputDto": {
+        "properties": {
+          "days": {
+            "maximum": 14,
+            "minimum": 1,
+            "type": "number"
           },
           "explanation": {
             "example": "Nuova società di consulenza approvata dal team",
@@ -642,15 +1940,308 @@
             "minLength": 3,
             "type": "string"
           },
-          "totp": {
-            "example": "123456",
+          "store": {
+            "enum": [
+              "apple",
+              "google"
+            ],
             "type": "string"
           }
         },
         "required": [
           "explanation",
-          "confirmName",
-          "totp"
+          "store",
+          "days"
+        ],
+        "type": "object"
+      },
+      "ReviewWindowOpenedDto": {
+        "properties": {
+          "code": {
+            "description": "Codice di revisione, mostrato una sola volta (D42)",
+            "type": "string"
+          },
+          "window": {
+            "$ref": "#/components/schemas/ReviewWindowDto"
+          }
+        },
+        "required": [
+          "window",
+          "code"
+        ],
+        "type": "object"
+      },
+      "RowsDto": {
+        "properties": {
+          "rows": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "type": "object"
+      },
+      "SanctionCreatedDto": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "SessionOperatorDto": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "roles": {
+            "items": {
+              "enum": [
+                "admin",
+                "moderator",
+                "support"
+              ],
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "roles"
+        ],
+        "type": "object"
+      },
+      "SignInChallengeDto": {
+        "properties": {
+          "expiresAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "maskedEmail": {
+            "description": "Indirizzo digitato, già mascherato (D90)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "maskedEmail",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
+      "SimilarCompanyDto": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "matchedOn": {
+            "enum": [
+              "name",
+              "domain"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "matchedOn"
+        ],
+        "type": "object"
+      },
+      "StatsDto": {
+        "properties": {
+          "generatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "values": {
+            "$ref": "#/components/schemas/StatsValuesDto"
+          }
+        },
+        "required": [
+          "generatedAt",
+          "values"
+        ],
+        "type": "object"
+      },
+      "StatsValuesDto": {
+        "properties": {
+          "activeUsers": {
+            "description": "`null` sotto la soglia",
+            "nullable": true,
+            "type": "number"
+          },
+          "companies": {
+            "nullable": true,
+            "type": "number"
+          },
+          "matches7d": {
+            "nullable": true,
+            "type": "number"
+          },
+          "offsitesPublished": {
+            "nullable": true,
+            "type": "number"
+          },
+          "openSpaceActive": {
+            "description": "Totale della piattaforma, mai per azienda (D197)",
+            "nullable": true,
+            "type": "number"
+          },
+          "pendingApprovals": {
+            "nullable": true,
+            "type": "number"
+          },
+          "registrations7d": {
+            "nullable": true,
+            "type": "number"
+          },
+          "reports7d": {
+            "nullable": true,
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "StoreReviewDto": {
+        "properties": {
+          "accounts": {
+            "items": {
+              "$ref": "#/components/schemas/DemoAccountDto"
+            },
+            "type": "array"
+          },
+          "windows": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewWindowDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "windows",
+          "accounts"
+        ],
+        "type": "object"
+      },
+      "StrongConfirmationDto": {
+        "properties": {
+          "confirmName": {
+            "description": "Nome o identificativo dell'oggetto digitato per conferma",
+            "type": "string"
+          },
+          "explanation": {
+            "example": "Nuova società di consulenza approvata dal team",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "explanation",
+          "confirmName"
+        ],
+        "type": "object"
+      },
+      "SystemConfigDto": {
+        "properties": {
+          "citiesCount": {
+            "type": "number"
+          },
+          "limits": {
+            "items": {
+              "$ref": "#/components/schemas/ConfigLimitDto"
+            },
+            "type": "array"
+          },
+          "lists": {
+            "description": "Parole del filtro, soglie delle foto",
+            "items": {
+              "$ref": "#/components/schemas/ConfigListDto"
+            },
+            "type": "array"
+          },
+          "taxonomies": {
+            "items": {
+              "$ref": "#/components/schemas/TaxonomyDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "limits",
+          "lists",
+          "taxonomies",
+          "citiesCount"
+        ],
+        "type": "object"
+      },
+      "TaxonomyDto": {
+        "properties": {
+          "id": {
+            "enum": [
+              "interests",
+              "practiceAreas",
+              "lookingFor",
+              "profileQuestions"
+            ],
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TaxonomyItemDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "items"
+        ],
+        "type": "object"
+      },
+      "TaxonomyItemDto": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "key": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "active"
+        ],
+        "type": "object"
+      },
+      "TaxonomyItemUpdateDto": {
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "explanation": {
+            "example": "Nuova società di consulenza approvata dal team",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "explanation",
+          "active"
         ],
         "type": "object"
       },
@@ -695,8 +2286,380 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "UserCardDto": {
+        "properties": {
+          "ageYears": {
+            "description": "Solo l’età (D90)",
+            "nullable": true,
+            "type": "number"
+          },
+          "approvedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "bio": {
+            "nullable": true,
+            "type": "string"
+          },
+          "companyId": {
+            "nullable": true,
+            "type": "string"
+          },
+          "companyName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "deletionRequestedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "deletionScheduledAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "firstName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "gender": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "isDemo": {
+            "type": "boolean"
+          },
+          "lastActiveAt": {
+            "description": "Giorno dell’ultimo accesso",
+            "nullable": true,
+            "type": "string"
+          },
+          "lastSeenOn": {
+            "nullable": true,
+            "type": "string"
+          },
+          "lookingFor": {
+            "nullable": true,
+            "type": "string"
+          },
+          "maskedPersonalEmail": {
+            "description": "Mascherata (D90)",
+            "nullable": true,
+            "type": "string"
+          },
+          "maskedWorkEmail": {
+            "description": "Uguale a `workEmailMasked`",
+            "nullable": true,
+            "type": "string"
+          },
+          "nextReverificationAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "personalEmailMasked": {
+            "description": "Mascherata (D90)",
+            "nullable": true,
+            "type": "string"
+          },
+          "photos": {
+            "items": {
+              "$ref": "#/components/schemas/UserPhotoDto"
+            },
+            "type": "array"
+          },
+          "practiceArea": {
+            "nullable": true,
+            "type": "string"
+          },
+          "reports": {
+            "items": {
+              "$ref": "#/components/schemas/UserReportDto"
+            },
+            "type": "array"
+          },
+          "reverificationDueAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "sanctions": {
+            "items": {
+              "$ref": "#/components/schemas/UserSanctionDto"
+            },
+            "type": "array"
+          },
+          "signInMethod": {
+            "enum": [
+              "apple",
+              "google",
+              "email"
+            ],
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "visible": {
+            "type": "boolean"
+          },
+          "workEmailMasked": {
+            "description": "Mascherata (D90)",
+            "nullable": true,
+            "type": "string"
+          },
+          "workEmailVerifiedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          }
+        },
         "required": [
-          "explanation"
+          "id",
+          "status",
+          "isDemo",
+          "createdAt",
+          "visible",
+          "photos",
+          "reports",
+          "sanctions"
+        ],
+        "type": "object"
+      },
+      "UserPhotoDto": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "position": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string"
+          },
+          "url": {
+            "description": "URL firmato di pochi minuti",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "position",
+          "status",
+          "url"
+        ],
+        "type": "object"
+      },
+      "UserReportDto": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "reason",
+          "severity",
+          "status",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "UserSanctionDto": {
+        "properties": {
+          "appealStatus": {
+            "enum": [
+              "none",
+              "pending",
+              "upheld",
+              "rejected"
+            ],
+            "type": "string"
+          },
+          "endsAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "reason": {
+            "description": "Motivazione per l’utente",
+            "nullable": true,
+            "type": "string"
+          },
+          "revokedAt": {
+            "format": "date-time",
+            "nullable": true,
+            "type": "string"
+          },
+          "severeCase": {
+            "nullable": true,
+            "type": "string"
+          },
+          "startsAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "startsAt",
+          "appealStatus"
+        ],
+        "type": "object"
+      },
+      "UserSanctionInputDto": {
+        "properties": {
+          "explanation": {
+            "example": "Nuova società di consulenza approvata dal team",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          },
+          "severeCase": {
+            "enum": [
+              "threats_violence",
+              "minor_content",
+              "fraud",
+              "stalking",
+              "colleague_rule_evasion",
+              "false_statements"
+            ],
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "warning",
+              "disciplinary_suspension",
+              "expulsion"
+            ],
+            "type": "string"
+          },
+          "userExplanation": {
+            "description": "Motivazione per l’utente (D75)",
+            "maxLength": 1000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "explanation",
+          "type",
+          "userExplanation"
+        ],
+        "type": "object"
+      },
+      "UserSummaryDto": {
+        "properties": {
+          "companyName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "firstName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "isDemo": {
+            "type": "boolean"
+          },
+          "maskedWorkEmail": {
+            "description": "Uguale a `workEmailMasked`",
+            "nullable": true,
+            "type": "string"
+          },
+          "personalEmailMasked": {
+            "description": "Mascherata (D90)",
+            "nullable": true,
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "workEmailMasked": {
+            "description": "Mascherata (D90)",
+            "nullable": true,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "isDemo",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "WaitlistGroupDto": {
+        "properties": {
+          "domain": {
+            "type": "string"
+          },
+          "firstAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "description": "Identificativo del gruppo: il dominio",
+            "type": "string"
+          },
+          "lastAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "requestsCount": {
+            "type": "number"
+          },
+          "suggestedNames": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "domain",
+          "requestsCount",
+          "suggestedNames",
+          "firstAt",
+          "lastAt"
         ],
         "type": "object"
       }
@@ -717,6 +2680,131 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/backoffice/appeals": {
+      "get": {
+        "operationId": "AppealsController_list",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "default": "pending",
+              "enum": [
+                "pending",
+                "closed"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AppealSummaryDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-appeals"
+        ]
+      }
+    },
+    "/backoffice/appeals/{id}": {
+      "get": {
+        "operationId": "AppealsController_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppealDetailDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-appeals"
+        ]
+      }
+    },
+    "/backoffice/appeals/{id}/decision": {
+      "post": {
+        "operationId": "AppealsController_decide",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppealDecisionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-appeals"
+        ]
+      }
+    },
     "/backoffice/approvals/{id}": {
       "get": {
         "operationId": "ApprovalsController_detail",
@@ -896,6 +2984,191 @@
         ]
       }
     },
+    "/backoffice/audit": {
+      "get": {
+        "operationId": "AdminToolsController_audit",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "enum": [
+                "action",
+                "security"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Codice dell’azione (es. `sanction_decided`)",
+            "in": "query",
+            "name": "action",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Cursore: identificativo dell’ultima riga della pagina",
+            "in": "query",
+            "name": "before",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AuditEntryDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-admin"
+        ]
+      }
+    },
+    "/backoffice/audit/export": {
+      "get": {
+        "operationId": "AdminToolsController_exportAudit",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "required": false,
+            "schema": {
+              "enum": [
+                "action",
+                "security"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "description": "Codice dell’azione (es. `sanction_decided`)",
+            "in": "query",
+            "name": "action",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Cursore: identificativo dell’ultima riga della pagina",
+            "in": "query",
+            "name": "before",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 500,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "format",
+            "required": false,
+            "schema": {
+              "default": "csv",
+              "enum": [
+                "csv",
+                "json"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-admin"
+        ]
+      }
+    },
     "/backoffice/auth/code": {
       "post": {
         "operationId": "OperatorAuthController_code",
@@ -912,6 +3185,13 @@
         },
         "responses": {
           "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignInChallengeDto"
+                }
+              }
+            },
             "description": "Risposta uguale per ogni indirizzo"
           }
         },
@@ -965,6 +3245,29 @@
                 }
               }
             },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-auth"
+        ]
+      }
+    },
+    "/backoffice/auth/session": {
+      "delete": {
+        "operationId": "OperatorAuthController_signOut",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
             "description": ""
           }
         },
@@ -1091,6 +3394,56 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CompanyDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-companies"
+        ]
+      }
+    },
+    "/backoffice/companies-similar": {
+      "get": {
+        "operationId": "CompanyOperationsController_similar",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "name",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Domini separati da virgola",
+            "in": "query",
+            "name": "domains",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SimilarCompanyDto"
+                  },
+                  "type": "array"
                 }
               }
             },
@@ -1329,6 +3682,968 @@
         ]
       }
     },
+    "/backoffice/companies/{id}/merge": {
+      "post": {
+        "operationId": "CompanyOperationsController_merge",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MergeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-companies"
+        ]
+      }
+    },
+    "/backoffice/companies/{id}/merge/preview": {
+      "get": {
+        "operationId": "CompanyOperationsController_previewMerge",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Azienda che resta",
+            "in": "query",
+            "name": "into",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangePreviewDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-companies"
+        ]
+      }
+    },
+    "/backoffice/companies/{id}/removal": {
+      "delete": {
+        "operationId": "CompanyOperationsController_cancelRemoval",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExplanationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-companies"
+        ]
+      },
+      "post": {
+        "operationId": "CompanyOperationsController_startRemoval",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StrongConfirmationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-companies"
+        ]
+      }
+    },
+    "/backoffice/companies/{id}/removal/preview": {
+      "get": {
+        "operationId": "CompanyOperationsController_removalPreview",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemovalPreviewDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-companies"
+        ]
+      }
+    },
+    "/backoffice/config": {
+      "get": {
+        "operationId": "AdminToolsController_config",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemConfigDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-admin"
+        ]
+      }
+    },
+    "/backoffice/config/cities": {
+      "get": {
+        "operationId": "AdminToolsController_cities",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CityDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-admin"
+        ]
+      }
+    },
+    "/backoffice/config/limits/{key}": {
+      "put": {
+        "operationId": "AdminToolsController_setLimit",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LimitUpdateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigLimitDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-admin"
+        ]
+      }
+    },
+    "/backoffice/config/lists/{key}": {
+      "put": {
+        "operationId": "AdminToolsController_setList",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfigValueDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-admin"
+        ]
+      }
+    },
+    "/backoffice/config/taxonomies/{taxonomy}/{key}": {
+      "put": {
+        "operationId": "AdminToolsController_setTaxonomyItem",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "taxonomy",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaxonomyItemUpdateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaxonomyItemDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-admin"
+        ]
+      }
+    },
+    "/backoffice/directory-alerts": {
+      "get": {
+        "operationId": "CompanyOperationsController_alerts",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DirectoryAlertDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-companies"
+        ]
+      }
+    },
+    "/backoffice/directory-alerts/{id}/closure": {
+      "post": {
+        "operationId": "CompanyOperationsController_closeAlert",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExplanationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-companies"
+        ]
+      }
+    },
+    "/backoffice/domains/{domain}/move": {
+      "post": {
+        "operationId": "CompanyOperationsController_move",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "domain",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MoveDomainDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-companies"
+        ]
+      }
+    },
+    "/backoffice/domains/{domain}/move/preview": {
+      "get": {
+        "operationId": "CompanyOperationsController_previewMove",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "domain",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Azienda che riceve il dominio",
+            "in": "query",
+            "name": "to",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangePreviewDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-companies"
+        ]
+      }
+    },
+    "/backoffice/matches/{id}/chat-read": {
+      "post": {
+        "operationId": "ModerationController_readChat",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatReadDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ChatReadMessageDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-moderation"
+        ]
+      }
+    },
+    "/backoffice/moderation/cases/{id}": {
+      "get": {
+        "operationId": "ModerationController_detail",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseViewDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-moderation"
+        ]
+      },
+      "post": {
+        "operationId": "ModerationController_decide",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CaseDecisionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-moderation"
+        ]
+      }
+    },
+    "/backoffice/moderation/cases/{id}/age-verification": {
+      "post": {
+        "operationId": "ModerationController_startAgeVerification",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExplanationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-moderation"
+        ]
+      }
+    },
+    "/backoffice/moderation/cases/{id}/reporter-sanction": {
+      "post": {
+        "operationId": "ModerationController_sanctionReporter",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReporterSanctionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-moderation"
+        ]
+      }
+    },
+    "/backoffice/moderation/cases/{id}/severity": {
+      "post": {
+        "operationId": "ModerationController_severity",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExplanationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-moderation"
+        ]
+      }
+    },
+    "/backoffice/moderation/queue": {
+      "get": {
+        "operationId": "ModerationController_queue",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/QueueEntryDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-moderation"
+        ]
+      }
+    },
+    "/backoffice/new-photos/{id}/outcome": {
+      "post": {
+        "operationId": "ModerationController_photoOutcome",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PhotoOutcomeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-moderation"
+        ]
+      }
+    },
+    "/backoffice/new-photos/queue": {
+      "get": {
+        "operationId": "ModerationController_newPhotos",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/NewPhotoDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-moderation"
+        ]
+      }
+    },
     "/backoffice/offsites": {
       "get": {
         "operationId": "OffsitesController_list",
@@ -1551,9 +4866,323 @@
         ]
       }
     },
+    "/backoffice/offsites/{id}/cover": {
+      "post": {
+        "operationId": "OffsitesController_cover",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "properties": {
+                  "file": {
+                    "format": "binary",
+                    "type": "string"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OffsiteDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-offsites"
+        ]
+      }
+    },
     "/backoffice/offsites/{id}/publication": {
       "post": {
         "operationId": "OffsitesController_publish",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OptionalExplanationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OffsiteDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-offsites"
+        ]
+      }
+    },
+    "/backoffice/operators": {
+      "get": {
+        "operationId": "AdminToolsController_operators",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OperatorDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-admin"
+        ]
+      },
+      "post": {
+        "operationId": "AdminToolsController_createOperator",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewOperatorDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperatorCreatedDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-admin"
+        ]
+      }
+    },
+    "/backoffice/operators/{id}": {
+      "patch": {
+        "operationId": "AdminToolsController_updateOperator",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OperatorUpdateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-admin"
+        ]
+      }
+    },
+    "/backoffice/stats": {
+      "get": {
+        "operationId": "AdminToolsController_stats",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatsDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-admin"
+        ]
+      }
+    },
+    "/backoffice/store-review": {
+      "get": {
+        "operationId": "AdminToolsController_storeReviewOverview",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreReviewDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-admin"
+        ]
+      }
+    },
+    "/backoffice/store-review/windows": {
+      "post": {
+        "operationId": "AdminToolsController_openWindow",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewWindowInputDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewWindowOpenedDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-admin"
+        ]
+      }
+    },
+    "/backoffice/store-review/windows/{id}/close": {
+      "post": {
+        "operationId": "AdminToolsController_closeWindow",
         "parameters": [
           {
             "in": "header",
@@ -1587,7 +5216,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OffsiteDto"
+                  "$ref": "#/components/schemas/ReviewWindowDto"
                 }
               }
             },
@@ -1595,7 +5224,614 @@
           }
         },
         "tags": [
-          "backoffice-offsites"
+          "backoffice-admin"
+        ]
+      }
+    },
+    "/backoffice/store-review/windows/{id}/reset": {
+      "post": {
+        "operationId": "AdminToolsController_reset",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExplanationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RowsDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-admin"
+        ]
+      }
+    },
+    "/backoffice/users": {
+      "get": {
+        "operationId": "UsersController_search",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Email esatta, personale o aziendale attiva",
+            "in": "query",
+            "name": "email",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "id",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UserSummaryDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-users"
+        ]
+      }
+    },
+    "/backoffice/users/{id}": {
+      "delete": {
+        "operationId": "UsersController_delete",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StrongConfirmationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-users"
+        ]
+      },
+      "get": {
+        "operationId": "UsersController_card",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserCardDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-users"
+        ]
+      }
+    },
+    "/backoffice/users/{id}/age-verification": {
+      "get": {
+        "operationId": "UsersController_ageDocument",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgeDocumentDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-users"
+        ]
+      },
+      "post": {
+        "operationId": "UsersController_requestAgeVerification",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExplanationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-users"
+        ]
+      }
+    },
+    "/backoffice/users/{id}/age-verification/outcome": {
+      "post": {
+        "operationId": "UsersController_ageOutcome",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgeOutcomeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-users"
+        ]
+      }
+    },
+    "/backoffice/users/{id}/birth-date": {
+      "post": {
+        "operationId": "UsersController_birthDate",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BirthDateDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgeDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-users"
+        ]
+      }
+    },
+    "/backoffice/users/{id}/reactivation": {
+      "post": {
+        "operationId": "UsersController_reactivate",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExplanationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-users"
+        ]
+      }
+    },
+    "/backoffice/users/{id}/reveal-email": {
+      "post": {
+        "operationId": "UsersController_reveal",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RevealEmailDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevealedEmailDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-users"
+        ]
+      }
+    },
+    "/backoffice/users/{id}/reverification": {
+      "post": {
+        "operationId": "UsersController_reverification",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExplanationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-users"
+        ]
+      }
+    },
+    "/backoffice/users/{id}/sanctions": {
+      "post": {
+        "operationId": "UsersController_sanction",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserSanctionInputDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SanctionCreatedDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-users"
+        ]
+      }
+    },
+    "/backoffice/waitlist": {
+      "get": {
+        "operationId": "CompanyOperationsController_waitlist",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/WaitlistGroupDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-companies"
+        ]
+      }
+    },
+    "/backoffice/waitlist/{domain}/response": {
+      "post": {
+        "operationId": "CompanyOperationsController_answer",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-Operator-Token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "domain",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExplanationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "tags": [
+          "backoffice-companies"
         ]
       }
     },

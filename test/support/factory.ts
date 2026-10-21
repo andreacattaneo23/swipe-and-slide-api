@@ -54,8 +54,8 @@ export class Factory {
       if (rowCount) return this.operatorId;
     }
     const { rows } = await this.pool.query<{ id: string }>(
-      `insert into operators (email, name, roles, encrypted_totp_secret)
-       values ($1, 'Operatore di prova', '{admin,moderator,support}', 'x') returning id`,
+      `insert into operators (email, name, roles)
+       values ($1, 'Operatore di prova', '{admin,moderator,support}') returning id`,
       [`op-${randomUUID()}@backoffice.example`],
     );
     this.operatorId = rows[0]!.id;

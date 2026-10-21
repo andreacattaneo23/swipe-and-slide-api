@@ -14,7 +14,9 @@ export type SectionId =
   | 'users'
   | 'approvals'
   | 'moderation'
+  | 'appeals'
   | 'offsites'
+  | 'demo'
   | 'audit'
   | 'stats'
   | 'config';
@@ -25,7 +27,9 @@ export type IconName =
   | 'users'
   | 'shieldCheck'
   | 'shield'
+  | 'scale'
   | 'ticket'
+  | 'smartphone'
   | 'lock'
   | 'chart'
   | 'settings';
@@ -36,11 +40,9 @@ export interface Section {
   label: TextKey;
   icon: IconName;
   roles: readonly OperatorRole[];
-  /** Vero per le sezioni già realizzate in questa fase. */
-  ready: boolean;
 }
 
-/** Ordine della barra laterale dei mockup 18a–18d. */
+/** Ordine della barra laterale dei mockup 18a–18d, con le voci nuove della fase 2 (D239). */
 export const SECTIONS: readonly Section[] = [
   {
     id: 'companies',
@@ -48,7 +50,6 @@ export const SECTIONS: readonly Section[] = [
     label: 'backoffice.companies',
     icon: 'building',
     roles: ['admin'],
-    ready: true,
   },
   {
     id: 'requests',
@@ -56,7 +57,6 @@ export const SECTIONS: readonly Section[] = [
     label: 'backoffice.requests',
     icon: 'list',
     roles: ['admin'],
-    ready: false,
   },
   {
     id: 'users',
@@ -64,7 +64,6 @@ export const SECTIONS: readonly Section[] = [
     label: 'backoffice.users',
     icon: 'users',
     roles: ['admin', 'support'],
-    ready: false,
   },
   {
     id: 'approvals',
@@ -72,7 +71,6 @@ export const SECTIONS: readonly Section[] = [
     label: 'backoffice.approvals',
     icon: 'shieldCheck',
     roles: ['admin', 'moderator'],
-    ready: true,
   },
   {
     id: 'moderation',
@@ -80,15 +78,28 @@ export const SECTIONS: readonly Section[] = [
     label: 'backoffice.moderation',
     icon: 'shield',
     roles: ['admin', 'moderator'],
-    ready: false,
+  },
+  {
+    id: 'appeals',
+    href: '/appeals',
+    label: 'backoffice.appeals',
+    icon: 'scale',
+    // Il Supporto esamina i ricorsi (D88); il Moderatore quelli delle sanzioni decise da altri.
+    roles: ['admin', 'moderator', 'support'],
   },
   {
     id: 'offsites',
-    href: '/offsites/new',
+    href: '/offsites',
     label: 'backoffice.offsite',
     icon: 'ticket',
     roles: ['admin'],
-    ready: true,
+  },
+  {
+    id: 'demo',
+    href: '/demo',
+    label: 'backoffice.demoAccounts',
+    icon: 'smartphone',
+    roles: ['admin'],
   },
   {
     id: 'audit',
@@ -96,7 +107,6 @@ export const SECTIONS: readonly Section[] = [
     label: 'backoffice.audit',
     icon: 'lock',
     roles: ['admin'],
-    ready: false,
   },
   {
     id: 'stats',
@@ -104,7 +114,6 @@ export const SECTIONS: readonly Section[] = [
     label: 'backoffice.stats',
     icon: 'chart',
     roles: ['admin'],
-    ready: false,
   },
   {
     id: 'config',
@@ -112,7 +121,6 @@ export const SECTIONS: readonly Section[] = [
     label: 'backoffice.config',
     icon: 'settings',
     roles: ['admin'],
-    ready: false,
   },
 ];
 

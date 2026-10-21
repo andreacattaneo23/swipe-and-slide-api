@@ -9,9 +9,15 @@ import { OperatorAuthController } from './auth/operator-auth.controller';
 import { OperatorAuthService } from './auth/operator-auth.service';
 import { OperatorGuard } from './auth/operator.guard';
 import { OperatorTokenService } from './auth/operator-token.service';
-import { TotpService } from './auth/totp.service';
 import { CompaniesController } from './companies/companies.controller';
 import { OffsitesController } from './offsites/offsites.controller';
+import { AppealsController } from './appeals/appeals.controller';
+import { CompanyOperationsController } from './companies/company-operations.controller';
+import { ModerationController } from './moderation/moderation.controller';
+import { AdminToolsController } from './tools/admin-tools.controller';
+import { AdminToolsService } from './tools/admin-tools.service';
+import { AccessAssertionService } from './auth/access-assertion.service';
+import { UsersController } from './users/users.controller';
 
 /**
  * Modulo radice di `admin-api` (SERVICE_ROLE=admin): API di amministrazione per il backoffice,
@@ -30,11 +36,17 @@ export class AdminApiModule {
         CompaniesController,
         ApprovalsController,
         OffsitesController,
+        CompanyOperationsController,
+        ModerationController,
+        UsersController,
+        AppealsController,
+        AdminToolsController,
       ],
       providers: [
         OperatorTokenService,
-        TotpService,
         OperatorAuthService,
+        AdminToolsService,
+        AccessAssertionService,
         { provide: APP_GUARD, useClass: OperatorGuard },
       ],
     };

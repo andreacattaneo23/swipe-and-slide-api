@@ -44,10 +44,6 @@ export function Sidebar({ roles, active, counts = {} }: SidebarProps) {
       </nav>
       <div className="sidebar__who">
         <div className="sidebar__role">{t(roleLabel(roles))}</div>
-        <div className="sidebar__tfa">
-          <Icon name="shieldCheck" size={15} />
-          <span>{t('backoffice.2fa')}</span>
-        </div>
         <form action={signOut}>
           <button type="submit" className="sidebar__sign-out">
             <Icon name="logOut" size={16} />

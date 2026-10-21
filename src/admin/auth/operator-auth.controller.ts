@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, Inject, Ip, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Inject, Ip, Post } from '@nestjs/common';
 import {
   ApiAcceptedResponse,
   ApiHeader,
@@ -13,7 +13,11 @@ import { operators } from '../../infra/database/schema';
 import { RateLimiter } from '../../infra/cache/rate-limiter';
 import { ApiError } from '../../infra/http/api-error';
 import { Public } from '../../core/auth/scopes.decorator';
-import { OperatorAuthService } from './operator-auth.service';
+import {
+  OperatorAuthService,
+  OperatorSessionResult,
+  SignInChallenge,
+} from './operator-auth.service';
 import { OperatorContext } from './operator-context';
 import { CurrentOperator, OperatorRoles } from './operator-roles.decorator';
 
@@ -25,15 +29,21 @@ export class OperatorEmailDto {
 }
 
 export class OperatorVerifyDto extends OperatorEmailDto {
-  @ApiProperty({ example: '123456', description: 'Codice OTP ricevuto via email' })
+  @ApiProperty({ example: '123456', description: 'Codice OTP ricevuto via email (D244)' })
   @IsString()
   @Matches(/^\d{6}$/)
   code: string;
+}
 
-  @ApiProperty({ example: '654321', description: "Codice TOTP dell'app di autenticazione (D88)" })
-  @IsString()
-  @Matches(/^\d{6}$/)
-  totp: string;
+export class SignInChallengeDto {
+  @ApiProperty({ description: 'Indirizzo digitato, già mascherato (D90)' }) maskedEmail: string;
+  @ApiProperty() expiresAt: Date;
+}
+
+export class SessionOperatorDto {
+  @ApiProperty() id: string;
+  @ApiProperty() name: string;
+  @ApiProperty({ enum: ['admin', 'moderator', 'support'], isArray: true }) roles: string[];
 }
 
 export class OperatorSessionDto {
@@ -44,6 +54,9 @@ export class OperatorSessionDto {
 
   @ApiProperty()
   expiresAt: Date;
+
+  @ApiProperty({ type: SessionOperatorDto })
+  operator: SessionOperatorDto;
 }
 
 export class OperatorMeDto {
@@ -55,9 +68,6 @@ export class OperatorMeDto {
 
   @ApiProperty({ enum: ['admin', 'moderator', 'support'], isArray: true })
   roles: string[];
-
-  @ApiProperty()
-  lastTotpAt: Date;
 }
 
 @ApiTags('backoffice-auth')
@@ -69,24 +79,35 @@ export class OperatorAuthController {
     @Inject(DATABASE) private readonly db: Database,
   ) {}
 
+  /**
+   * Primo passo: codice all'email dell'operatore. Risposta uguale per ogni indirizzo, con
+   * l'indirizzo digitato mascherato.
+   */
   @Post('code')
   @Public()
   @HttpCode(202)
-  @ApiAcceptedResponse({ description: 'Risposta uguale per ogni indirizzo' })
-  async code(@Body() body: OperatorEmailDto, @Ip() ip: string): Promise<{ status: 'sent' }> {
+  @ApiAcceptedResponse({
+    type: SignInChallengeDto,
+    description: 'Risposta uguale per ogni indirizzo',
+  })
+  async code(@Body() body: OperatorEmailDto, @Ip() ip: string): Promise<SignInChallenge> {
     if (!(await this.limiter.hit(`operator-code:${ip}`, 10, 60))) throw ApiError.tooManyRequests();
-    await this.auth.requestCode(body.email, ip);
-    return { status: 'sent' };
+    return this.auth.requestCode(body.email, ip);
   }
 
+  /**
+   * Secondo passo: codice all'email, senza secondo fattore (D244). Errori: `invalid_credentials`
+   * (`401`, con `remainingAttempts`, senza dire se l'indirizzo è di un operatore),
+   * `code_expired`, `too_many_attempts` (`429`).
+   */
   @Post('verify')
   @Public()
   @HttpCode(200)
   @ApiOkResponse({ type: OperatorSessionDto })
-  async verify(@Body() body: OperatorVerifyDto, @Ip() ip: string): Promise<OperatorSessionDto> {
+  async verify(@Body() body: OperatorVerifyDto, @Ip() ip: string): Promise<OperatorSessionResult> {
     if (!(await this.limiter.hit(`operator-verify:${ip}`, 10, 60)))
       throw ApiError.tooManyRequests();
-    return this.auth.verify(body.email, body.code, body.totp);
+    return this.auth.verify(body.email, body.code);
   }
 
   @Get('me')
@@ -102,7 +123,6 @@ export class OperatorAuthController {
       id: operator.operatorId,
       name: row?.name ?? '',
       roles: operator.roles,
-      lastTotpAt: operator.lastTotpAt,
     };
   }
 
@@ -111,6 +131,15 @@ export class OperatorAuthController {
   @ApiHeader({ name: 'X-Operator-Token', required: true })
   @HttpCode(204)
   async logout(@CurrentOperator() operator: OperatorContext): Promise<void> {
+    await this.auth.logout(operator.sessionId);
+  }
+
+  /** Uscita, nella forma usata dal backoffice. */
+  @Delete('session')
+  @OperatorRoles('admin', 'moderator', 'support')
+  @ApiHeader({ name: 'X-Operator-Token', required: true })
+  @HttpCode(204)
+  async signOut(@CurrentOperator() operator: OperatorContext): Promise<void> {
     await this.auth.logout(operator.sessionId);
   }
 }

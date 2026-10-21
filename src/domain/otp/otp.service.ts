@@ -79,7 +79,7 @@ export class OtpService {
     });
     if (params.send !== false) {
       const { subject, text } = otpEmail(code);
-      await this.email.send({ to: params.email, from: params.from, subject, text, devCode: code });
+      await this.email.send({ to: params.email, from: params.from, subject, text });
     }
   }
 
@@ -88,8 +88,16 @@ export class OtpService {
    * se poi la richiesta fallisce; al quinto errore il codice non vale più.
    */
   async verify(email: string, purpose: OtpPurpose, code: string): Promise<OtpCheck> {
+    return this.verifyRecipient(this.recipientHash(email), purpose, code);
+  }
+
+  /** Come `verify`, con l'impronta del destinatario già calcolata (sfide degli operatori). */
+  async verifyRecipient(
+    recipientHash: string,
+    purpose: OtpPurpose,
+    code: string,
+  ): Promise<OtpCheck> {
     return this.db.transaction(async (executor): Promise<OtpCheck> => {
-      const recipientHash = this.recipientHash(email);
       const [row] = await executor
         .select()
         .from(otpCodes)
@@ -121,6 +129,56 @@ export class OtpService {
         .set({ consumedAt: sql`now()` })
         .where(eq(otpCodes.id, row.id));
       return 'ok';
+    });
+  }
+
+  /**
+   * Verifica del codice con i tentativi rimasti (accesso degli operatori, D88, D244): al quinto
+   * errore il codice non vale più (`exhausted`), così la risposta può dirlo senza altri dettagli.
+   */
+  async verifyWithAttempts(
+    recipientHash: string,
+    purpose: OtpPurpose,
+    code: string,
+  ): Promise<{ check: OtpCheck | 'exhausted'; remainingAttempts: number }> {
+    return this.db.transaction(async (executor) => {
+      const [row] = await executor
+        .select()
+        .from(otpCodes)
+        .where(
+          and(
+            eq(otpCodes.recipientHash, recipientHash),
+            eq(otpCodes.purpose, purpose),
+            isNull(otpCodes.consumedAt),
+            isNull(otpCodes.cancelledAt),
+          ),
+        )
+        .orderBy(desc(otpCodes.createdAt))
+        .limit(1)
+        .for('update');
+      if (!row) return { check: 'invalid' as const, remainingAttempts: 0 };
+      if (row.attempts >= OTP_RULES.maxAttempts) {
+        return { check: 'exhausted' as const, remainingAttempts: 0 };
+      }
+      if (row.expiresAt.getTime() <= Date.now()) {
+        return { check: 'expired' as const, remainingAttempts: 0 };
+      }
+      const expected = this.crypto.hash('otp-code', `${recipientHash}:${code}`);
+      if (!/^\d{6}$/.test(code) || !this.crypto.equalHashes(expected, row.codeHash)) {
+        await executor
+          .update(otpCodes)
+          .set({ attempts: sql`${otpCodes.attempts} + 1` })
+          .where(eq(otpCodes.id, row.id));
+        const remaining = OTP_RULES.maxAttempts - (row.attempts + 1);
+        return remaining <= 0
+          ? { check: 'exhausted' as const, remainingAttempts: 0 }
+          : { check: 'invalid' as const, remainingAttempts: remaining };
+      }
+      await executor
+        .update(otpCodes)
+        .set({ consumedAt: sql`now()` })
+        .where(eq(otpCodes.id, row.id));
+      return { check: 'ok' as const, remainingAttempts: OTP_RULES.maxAttempts - row.attempts };
     });
   }
 

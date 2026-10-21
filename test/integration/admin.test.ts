@@ -1,22 +1,18 @@
 // Integrazione delle API di amministrazione con PostgreSQL reale e il ruolo `backoffice_role`:
 // accesso degli operatori, aziende e domini, approvazioni e offsite.
 import type { INestApplication } from '@nestjs/common';
-import { generate, generateSecret } from 'otplib';
 import { Pool } from 'pg';
 import request from 'supertest';
 import type { App } from 'supertest/types';
-import { CryptoService } from '../../src/infra/crypto/crypto.service';
-import type { LogEmailSender } from '../../src/infra/email/log-email-sender';
+import type { CaptureEmailSender } from '../support/capture-email-sender';
 import { Factory } from '../support/factory';
 import { createTestApp } from '../support/test-app';
-import { testConfig } from '../support/test-config';
 import { TEST_DATABASE_URL, truncateAll } from '../support/test-db';
 
 const pool = new Pool({ connectionString: TEST_DATABASE_URL, max: 3 });
 const f = new Factory(pool);
-const crypto = new CryptoService(testConfig('admin'));
 let app: INestApplication<App>;
-let email: LogEmailSender;
+let email: CaptureEmailSender;
 
 beforeAll(async () => {
   ({ app, email } = await createTestApp('admin'));
@@ -36,18 +32,18 @@ const api = () => request(app.getHttpServer());
 const count = async (sql: string, params: unknown[] = []) =>
   Number((await pool.query<{ n: string }>(sql, params)).rows[0]!.n);
 
-/** Operatore di prova con il suo segreto TOTP. */
+/** Operatore di prova: accede con l'email e il codice (D244). */
 async function operator(roles: string[] = ['admin', 'moderator', 'support']) {
-  const secret = generateSecret();
   const address = `op-${roles.join('-')}-${Date.now()}@backoffice.example`;
-  await pool.query(
-    'insert into operators (email, name, roles, encrypted_totp_secret) values ($1, $2, $3, $4)',
-    [address, 'Operatore', `{${roles.join(',')}}`, crypto.encryptTotpSecret(secret)],
-  );
-  return { address, secret };
+  await pool.query('insert into operators (email, name, roles) values ($1, $2, $3)', [
+    address,
+    'Operatore',
+    `{${roles.join(',')}}`,
+  ]);
+  return { address };
 }
 
-async function login(roles?: string[]): Promise<{ token: string; secret: string }> {
+async function login(roles?: string[]): Promise<{ token: string }> {
   const op = await operator(roles);
   await api().post('/backoffice/auth/code').send({ email: op.address }).expect(202);
   const response = await api()
@@ -55,25 +51,35 @@ async function login(roles?: string[]): Promise<{ token: string; secret: string 
     .send({
       email: op.address,
       code: email.lastCodeFor(op.address),
-      totp: await generate({ secret: op.secret }),
     })
     .expect(200);
-  return { token: response.body.token as string, secret: op.secret };
+  return { token: response.body.token as string };
 }
 
 const why = { explanation: 'Verifica del team' };
 
-describe('Accesso degli operatori (D88, D231)', () => {
-  it('OTP più TOTP; con il TOTP sbagliato 401 e un evento di sicurezza', async () => {
+describe('Accesso degli operatori (D88, D231, D244)', () => {
+  it('email e codice, senza TOTP; codice sbagliato 401 con i tentativi e un evento di sicurezza', async () => {
     const op = await operator();
     await api().post('/backoffice/auth/code').send({ email: op.address }).expect(202);
-    await api()
+    const right = email.lastCodeFor(op.address)!;
+    const wrong = await api()
       .post('/backoffice/auth/verify')
-      .send({ email: op.address, code: email.lastCodeFor(op.address), totp: '000000' })
+      .send({ email: op.address, code: right === '000000' ? '111111' : '000000' })
       .expect(401);
+    expect(wrong.body.error).toEqual({ code: 'invalid_credentials', remainingAttempts: 4 });
     expect(
       await count("select count(*) as n from audit_log where action = 'operator_login_failed'"),
     ).toBe(1);
+    // Il secondo fattore non c'è più: un campo `totp` non è ammesso
+    await api()
+      .post('/backoffice/auth/verify')
+      .send({ email: op.address, code: right, totp: '123456' })
+      .expect(400);
+    await api()
+      .post('/backoffice/auth/verify')
+      .send({ email: op.address, code: right })
+      .expect(200);
     const { token } = await login();
     const me = await api().get('/backoffice/auth/me').set('X-Operator-Token', token).expect(200);
     expect(me.body.roles).toEqual(['admin', 'moderator', 'support']);
@@ -108,7 +114,7 @@ describe('Accesso degli operatori (D88, D231)', () => {
 
 describe('Aziende e domini (D23, D84, D91, D93)', () => {
   it('creazione, modifica, domini e cancellazione con audit e motivazione', async () => {
-    const { token, secret } = await login();
+    const { token } = await login();
     const auth = { 'X-Operator-Token': token };
     const created = await api()
       .post('/backoffice/companies')
@@ -145,12 +151,12 @@ describe('Aziende e domini (D23, D84, D91, D93)', () => {
     await api()
       .delete(`/backoffice/companies/${id}`)
       .set(auth)
-      .send({ ...why, confirmName: 'Altro nome', totp: await generate({ secret }) })
+      .send({ ...why, confirmName: 'Altro nome' })
       .expect(400);
     await api()
       .delete(`/backoffice/companies/${id}`)
       .set(auth)
-      .send({ ...why, confirmName: 'Modello Partners Italia', totp: await generate({ secret }) })
+      .send({ ...why, confirmName: 'Modello Partners Italia' })
       .expect(204);
     const { rows } = await pool.query<{ action: string; explanation: string }>(
       "select action, explanation from audit_log where type = 'action' order by performed_at",
@@ -184,7 +190,7 @@ describe('Aziende e domini (D23, D84, D91, D93)', () => {
   });
 
   it("un'azienda con utenti non si cancella direttamente (serve la rimozione con intervallo)", async () => {
-    const { token, secret } = await login();
+    const { token } = await login();
     const x = await f.company();
     await f.user(x);
     const { rows } = await pool.query<{ name: string }>(
@@ -194,7 +200,7 @@ describe('Aziende e domini (D23, D84, D91, D93)', () => {
     const response = await api()
       .delete(`/backoffice/companies/${x}`)
       .set('X-Operator-Token', token)
-      .send({ ...why, confirmName: rows[0]!.name, totp: await generate({ secret }) })
+      .send({ ...why, confirmName: rows[0]!.name })
       .expect(409);
     expect(response.body.error.code).toBe('company.hasUsers');
   });
@@ -323,7 +329,8 @@ describe('Offsite (D150, D153, D167)', () => {
     }
     const read = await api().get(`/backoffice/offsites/${id}`).set(auth).expect(200);
     expect(read.body.attendeesRounded).toBe(20);
-    expect(JSON.stringify(read.body)).not.toContain('27');
+    // Nessun valore uguale al numero esatto (non si cerca la stringa: gli uuid contengono cifre)
+    expect(Object.values(read.body as Record<string, unknown>)).not.toContain(27);
     const cancelled = await api()
       .post(`/backoffice/offsites/${id}/cancellation`)
       .set(auth)
@@ -338,6 +345,45 @@ describe('Offsite (D150, D153, D167)', () => {
     expect(await count("select count(*) as n from audit_log where object_type = 'offsite'")).toBe(
       4,
     );
+  });
+
+  it('tassonomie a tema dalle tabelle del profilo: voce spenta e riaccesa con audit', async () => {
+    const { token } = await login(['admin']);
+    const auth = { 'X-Operator-Token': token };
+    const config = await api().get('/backoffice/config').set(auth).expect(200);
+    const ids = (config.body.taxonomies as { id: string }[]).map((taxonomy) => taxonomy.id);
+    expect(ids).toEqual(['interests', 'practiceAreas', 'lookingFor', 'profileQuestions']);
+    const interests = (config.body.taxonomies as { items: { key: string }[] }[])[0]!.items;
+    expect(interests.length).toBeGreaterThan(0);
+    const key = interests[0]!.key;
+    try {
+      const off = await api()
+        .put(`/backoffice/config/taxonomies/interests/${key}`)
+        .set(auth)
+        .send({ active: false, ...why })
+        .expect(200);
+      expect(off.body).toEqual({ key, active: false });
+      expect(
+        await count('select count(*) as n from interests where code = $1 and not is_active', [key]),
+      ).toBe(1);
+      await api()
+        .put('/backoffice/config/taxonomies/interests/inesistente')
+        .set(auth)
+        .send({ active: false, ...why })
+        .expect(404);
+      await api()
+        .put(`/backoffice/config/taxonomies/altro/${key}`)
+        .set(auth)
+        .send({ active: false, ...why })
+        .expect(404);
+    } finally {
+      await pool.query('update interests set is_active = true where code = $1', [key]);
+    }
+    expect(
+      await count(
+        "select count(*) as n from audit_log where action = 'config_changed' and object_id = 'taxonomies.interests'",
+      ),
+    ).toBe(1);
   });
 
   it('RC-117 il ruolo backoffice_role non legge le tabelle protette', async () => {

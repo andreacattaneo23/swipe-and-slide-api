@@ -1,3 +1,5 @@
+import { REJECTION_REASONS } from '../../domain/approvals/approvals.service';
+import { MySanctionDto } from '../safety/safety.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class OwnCompanyDto {
@@ -8,7 +10,54 @@ export class OwnCompanyDto {
   name: string;
 }
 
+export class ExcludedCompaniesNoticeDto {
+  @ApiPropertyOptional({
+    type: OwnCompanyDto,
+    nullable: true,
+    description: 'Azienda lasciata, entrata nelle aziende escluse (`excluded.notice.company`)',
+  })
+  leftCompany: OwnCompanyDto | null;
+
+  @ApiPropertyOptional({
+    type: OwnCompanyDto,
+    nullable: true,
+    description: 'Nuova azienda tolta dalle aziende escluse (`excluded.removedCurrent`)',
+  })
+  removedCurrentCompany: OwnCompanyDto | null;
+}
+
 export class MeDto {
+  @ApiPropertyOptional({ nullable: true, type: String, description: 'Nome del profilo' })
+  firstName: string | null;
+
+  @ApiPropertyOptional({
+    nullable: true,
+    type: String,
+    description: "Email personale attiva (D224): solo all'utente stesso",
+  })
+  personalEmail: string | null;
+
+  @ApiPropertyOptional({
+    nullable: true,
+    type: String,
+    description: "Email aziendale attiva, mascherata (D90, D137): solo all'utente stesso",
+  })
+  workEmail: string | null;
+
+  @ApiProperty({
+    enum: ['photos', 'firstName', 'gender', 'interestedIn', 'homeCity'],
+    isArray: true,
+    description: 'Ciò che manca al profilo per entrare nel feed (D51, D109)',
+  })
+  missing: ('photos' | 'firstName' | 'gender' | 'interestedIn' | 'homeCity')[];
+
+  @ApiPropertyOptional({
+    nullable: true,
+    type: MySanctionDto,
+    description: 'Sanzione in corso, la più recente (D75, D113); le altre in `GET /me/sanctions`',
+  })
+  sanction: MySanctionDto | null;
+
   @ApiProperty()
   id: string;
 
@@ -58,6 +107,22 @@ export class MeDto {
     description: 'Fine dei 7 giorni per completare la registrazione',
   })
   registrationExpiresAt: Date | null;
+
+  @ApiPropertyOptional({ nullable: true, description: 'Cancellazione definitiva prevista (D83)' })
+  deletionFinalAt: Date | null;
+
+  @ApiProperty({ description: 'Il ripensamento viene dalla revoca del consenso art. 9' })
+  consentRevoked: boolean;
+
+  @ApiPropertyOptional({ nullable: true, description: 'Modalità OOO attiva da (D81)' })
+  oooSince: Date | null;
+
+  @ApiPropertyOptional({
+    type: ExcludedCompaniesNoticeDto,
+    nullable: true,
+    description: 'Avviso da mostrare una volta dopo un cambio azienda (D176)',
+  })
+  excludedCompaniesNotice: ExcludedCompaniesNoticeDto | null;
 }
 
 export class ApprovalStatusDto {
@@ -67,7 +132,11 @@ export class ApprovalStatusDto {
   @ApiPropertyOptional({ nullable: true })
   dueAt: Date | null;
 
-  @ApiPropertyOptional({ nullable: true, description: 'Codice del motivo del rifiuto' })
+  @ApiPropertyOptional({
+    nullable: true,
+    enum: REJECTION_REASONS,
+    description: 'Codice del motivo del rifiuto, uguale nel backoffice (D142)',
+  })
   reason: string | null;
 
   @ApiPropertyOptional({ nullable: true, description: 'Motivazione, visibile solo qui (D142)' })

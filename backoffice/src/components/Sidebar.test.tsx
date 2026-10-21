@@ -21,7 +21,9 @@ describe('barra laterale', () => {
       'Utenti',
       'Approvazioni12',
       'Moderazione',
+      'Ricorsi',
       'Offsite',
+      'Account dimostrativi',
       'Audit',
       'Statistiche',
       'Configurazione',
@@ -31,13 +33,18 @@ describe('barra laterale', () => {
       'page',
     );
     expect(screen.getByText('Amministratore')).toBeInTheDocument();
-    expect(screen.getByText('Secondo fattore attivo')).toBeInTheDocument();
+    // Nessun secondo fattore nel backoffice (D244)
+    expect(screen.queryByText('Secondo fattore attivo')).not.toBeInTheDocument();
   });
 
   it('il Moderatore vede solo le sue voci (mockup 18c)', () => {
     render(<Sidebar roles={['moderator']} active="approvals" />);
     const links = within(screen.getByRole('navigation')).getAllByRole('link');
-    expect(links.map((link) => link.getAttribute('href'))).toEqual(['/approvals', '/moderation']);
+    expect(links.map((link) => link.getAttribute('href'))).toEqual([
+      '/approvals',
+      '/moderation',
+      '/appeals',
+    ]);
     expect(screen.getByText('Moderatore')).toBeInTheDocument();
   });
 });

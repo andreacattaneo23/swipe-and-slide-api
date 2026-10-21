@@ -1,13 +1,19 @@
 import 'reflect-metadata';
-import { generateSecret, generateURI } from 'otplib';
 import { Pool, PoolClient } from 'pg';
+import { randomBytes } from 'node:crypto';
+import sharp from 'sharp';
+import { photoKeys } from '../domain/photos/photos.service';
 import { loadConfig } from '../infra/config/config';
 import { CryptoService } from '../infra/crypto/crypto.service';
+import { ensureBucket, S3ObjectStorage } from '../infra/storage/s3-object-storage';
+import { seedSafety } from './seed-safety';
 
 /**
  * `npm run db:seed`: dati fittizi di sviluppo (mai in produzione). Svuota le tabelle e crea
  * comuni, aziende e domini di fantasia (D42: nessuna società reale), un operatore con tutti i
- * ruoli e alcuni utenti approvati con il profilo completo, più uno in approvazione.
+ * ruoli e alcuni utenti approvati con il profilo completo, più uno in approvazione. Le foto
+ * sono immagini vere caricate sull'archivio S3 (MinIO in locale, D240), ricodificate come quelle
+ * dell'app: ritratti astratti con le iniziali, nessuna persona reale.
  */
 
 const CITIES = [
@@ -146,23 +152,25 @@ async function main(): Promise<void> {
     connectionString: process.env.DATABASE_URL_DIRECT ?? config.databaseUrl,
     max: 1,
   });
+  const storage = new S3ObjectStorage(config.storage);
+  await ensureBucket(storage);
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
     await reset(client);
     await seedCities(client);
     const companyIds = await seedCompanies(client);
-    const operator = await seedOperator(client, crypto);
-    await seedUsers(client, crypto, companyIds, operator.id);
+    const operator = await seedOperator(client);
+    await seedUsers(client, crypto, storage, companyIds, operator.id);
     await seedOffsite(client, operator.id);
+    const demoAccounts = await seedSafety(client, crypto);
     await client.query('COMMIT');
     process.stdout.write(
       [
         'Dati di sviluppo creati.',
         `Operatore: ${operator.email} (ruoli admin, moderator, support)`,
-        `Segreto TOTP: ${operator.secret}`,
-        `URI per l'app di autenticazione: ${operator.uri}`,
-        'Codice TOTP corrente: node dist/cli/totp.js <segreto>',
+        "Accesso al backoffice: email dell'operatore e codice letto su Mailpit (http://localhost:8025)",
+        `Account dimostrativi (codice di revisione dal backoffice): ${demoAccounts.join(', ')}`,
         `Utenti: ${USERS.map((u) => `${u.first.toLowerCase()}.${u.last.toLowerCase()}@personale.example`).join(', ')}`,
         '',
       ].join('\n'),
@@ -176,13 +184,69 @@ async function main(): Promise<void> {
   }
 }
 
+/** Tabelle che il seed non svuota: migrazioni, configurazione e tassonomie delle migrazioni. */
+const KEPT = [
+  'schema_migrations',
+  'config',
+  'looking_for_options',
+  'interests',
+  'practice_areas',
+  'profile_questions',
+];
+
 async function reset(client: PoolClient): Promise<void> {
   const { rows } = await client.query<{ tablename: string }>(
-    `select tablename from pg_tables where schemaname = 'public'
-       and tablename not in ('schema_migrations', 'config')`,
+    `select tablename from pg_tables where schemaname = 'public' and not (tablename = any($1))`,
+    [KEPT],
   );
-  await client.query(`TRUNCATE ${rows.map((row) => `"${row.tablename}"`).join(', ')} CASCADE`);
+  // `config` resta: senza CASCADE su `operators` (`config.updated_by`), che si svuota a parte
+  await client.query('update config set updated_by = null');
+  await client.query(
+    `TRUNCATE ${rows
+      .filter((row) => row.tablename !== 'operators')
+      .map((row) => `"${row.tablename}"`)
+      .join(', ')}`,
+  );
+  await client.query('delete from operators');
 }
+
+const PALETTE = ['#B4583F', '#8FA58E', '#3A2436', '#F2D58A', '#7A8FA6', '#C98B6B'];
+
+/** Ritratto astratto con le iniziali, ricodificato in JPEG senza metadati come le foto vere. */
+async function portrait(
+  initials: string,
+  variant: number,
+): Promise<{ large: Buffer; thumb: Buffer }> {
+  const color = PALETTE[(initials.charCodeAt(0) + variant) % PALETTE.length]!;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1600">
+    <rect width="1200" height="1600" fill="${color}"/>
+    <circle cx="600" cy="620" r="${260 + variant * 30}" fill="#F7F1E8" opacity="0.85"/>
+    <rect x="300" y="980" width="600" height="420" rx="200" fill="#F7F1E8" opacity="0.6"/>
+    <text x="600" y="690" font-size="220" text-anchor="middle" font-family="sans-serif"
+          fill="#3A2436">${initials}</text></svg>`;
+  const base = sharp(Buffer.from(svg));
+  return {
+    large: await base
+      .clone()
+      .resize(1200, 1600, { fit: 'inside' })
+      .jpeg({ quality: 85 })
+      .toBuffer(),
+    thumb: await base.clone().resize(480, 480, { fit: 'cover' }).jpeg({ quality: 80 }).toBuffer(),
+  };
+}
+
+const LOOKING_FOR = ['gantt', 'pptx', 'discovery', 'coffee', 'pilot_project', 'permanent_contract'];
+const AREAS = ['strategy', 'data_ai', 'technology', 'finance', 'operations', 'sustainability'];
+const INTERESTS = [
+  ['cooking', 'pivot', 'trains'],
+  ['cinema', 'lounge', 'travel'],
+  ['running', 'matrices'],
+  ['sea', 'hotel_breakfast', 'reading'],
+  ['football', 'miles'],
+  ['yoga', 'post_it', 'art'],
+  ['board_games', 'new_cities'],
+  ['mountains', 'quick_packing'],
+];
 
 async function seedCities(client: PoolClient): Promise<void> {
   for (const [id, name, province, region, lat, lon, population] of CITIES) {
@@ -220,25 +284,21 @@ async function seedCompanies(client: PoolClient): Promise<string[]> {
   return ids;
 }
 
-async function seedOperator(client: PoolClient, crypto: CryptoService) {
+/** Operatore di sviluppo: accede con l'email e il codice ricevuto su Mailpit (D244). */
+async function seedOperator(client: PoolClient) {
   const email = 'admin@backoffice.example';
-  const secret = process.env.SEED_OPERATOR_TOTP_SECRET || generateSecret();
   const { rows } = await client.query<{ id: string }>(
-    `insert into operators (email, name, roles, encrypted_totp_secret)
-     values ($1, 'Amministratore di sviluppo', '{admin,moderator,support}', $2) returning id`,
-    [email, crypto.encryptTotpSecret(secret)],
+    `insert into operators (email, name, roles)
+     values ($1, 'Amministratore di sviluppo', '{admin,moderator,support}') returning id`,
+    [email],
   );
-  return {
-    id: rows[0]!.id,
-    email,
-    secret,
-    uri: generateURI({ issuer: 'Swipe & Slide backoffice', label: email, secret }),
-  };
+  return { id: rows[0]!.id, email };
 }
 
 async function seedUsers(
   client: PoolClient,
   crypto: CryptoService,
+  storage: S3ObjectStorage,
   companyIds: string[],
   operatorId: string,
 ): Promise<void> {
@@ -283,16 +343,29 @@ async function seedUsers(
         user.city,
       ],
     );
+    await client.query(
+      'update profiles set looking_for = $2, practice_area = $3 where user_id = $1',
+      [userId, LOOKING_FOR[index % LOOKING_FOR.length], AREAS[index % AREAS.length]],
+    );
+    for (const interest of INTERESTS[index % INTERESTS.length]!) {
+      await client.query('insert into user_interests (user_id, interest) values ($1, $2)', [
+        userId,
+        interest,
+      ]);
+    }
+    await client.query(
+      "insert into profile_answers (user_id, question, answer) values ($1, 'kpi', 'Che il tempo voli come in un workshop riuscito.')",
+      [userId],
+    );
     for (const position of [1, 2]) {
+      const key = randomBytes(16).toString('hex');
+      const files = await portrait(`${user.first[0]}${user.last[0]}`, position);
+      await storage.put(photoKeys(key).large, files.large, 'image/jpeg');
+      await storage.put(photoKeys(key).thumb, files.thumb, 'image/jpeg');
       await client.query(
         `insert into photos (user_id, storage_key, position, status, checked_at)
          values ($1, $2, $3, $4, now())`,
-        [
-          userId,
-          `seed/${index}-${position}.jpg`,
-          position,
-          user.status === 'active' ? 'approved' : 'pending_approval',
-        ],
+        [userId, key, position, user.status === 'active' ? 'approved' : 'pending_approval'],
       );
     }
     await client.query("select set_open_space($1, $2, 'registration', 'seed')", [

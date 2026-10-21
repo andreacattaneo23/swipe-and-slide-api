@@ -9,7 +9,23 @@ import { SetMetadata } from '@nestjs/common';
 export type RouteRule = 'interact' | 'match';
 
 export type ExposesUserOptions =
-  { rule: 'interact'; param?: string; body?: string } | { rule: 'match'; match: string };
+  | { rule: 'interact'; param?: string; body?: string }
+  | {
+      rule: 'match';
+      /** Parametro del percorso o campo del corpo con l'identificativo del match. */
+      match?: string;
+      body?: string;
+      /**
+       * Lettura anche nella conversazione momentaneamente sospesa (D82): basta partecipare a un
+       * match attivo; profilo e scritture richiedono anche gli account visibili (architettura).
+       */
+      paused?: boolean;
+    }
+  /**
+   * Elenchi (feed, swipe dell'offsite, Agenda): la regola si applica a ogni elemento nella query,
+   * nel database; la guard non ha un identificativo da controllare.
+   */
+  | { rule: 'interact' | 'match'; perItem: true };
 
 export const EXPOSES_USER = 'exposesUser';
 

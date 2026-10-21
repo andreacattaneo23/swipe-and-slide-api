@@ -6,6 +6,7 @@ import { AuditService } from '../../infra/audit/audit.service';
 import { CryptoService } from '../../infra/crypto/crypto.service';
 import { ApiError } from '../../infra/http/api-error';
 import { SessionScope } from '../../core/auth/auth-context';
+import { RealtimePublisher } from '../../domain/realtime/realtime-publisher';
 import {
   ACCESS_TOKEN_SECONDS,
   AccessTokenService,
@@ -34,6 +35,7 @@ export class SessionsService {
     private readonly crypto: CryptoService,
     private readonly tokens: AccessTokenService,
     private readonly audit: AuditService,
+    private readonly realtime: RealtimePublisher,
   ) {}
 
   /** Ambito della sessione dallo stato dell'account (architettura, "Registrazione e accesso"). */
@@ -116,7 +118,7 @@ export class SessionsService {
             },
             tx,
           );
-          return null;
+          return { reusedBy: session.userId };
         }
         const scope = await this.scopeFor(session.userId, tx);
         if (!scope) throw ApiError.unauthorized();
@@ -131,9 +133,12 @@ export class SessionsService {
           .where(eq(sessions.id, sessionId));
         return this.tokensFor(session.userId, sessionId, scope, next);
       })
-      .then((result) => {
-        // La revoca per riuso si conferma prima di rispondere `401`
-        if (!result) throw ApiError.unauthorized();
+      .then(async (result) => {
+        // La revoca per riuso si conferma prima di rispondere `401`, e chiude i canali
+        if ('reusedBy' in result) {
+          await this.realtime.closeChannels(result.reusedBy, [sessionId]);
+          throw ApiError.unauthorized();
+        }
         return result;
       });
   }
@@ -168,19 +173,28 @@ export class SessionsService {
     return session !== undefined;
   }
 
+  /** Uscita: revoca la sessione e chiude i suoi canali `realtime` (D231). */
   async revoke(sessionId: string): Promise<void> {
-    await this.db
+    const revoked = await this.db
       .update(sessions)
       .set({ revokedAt: sql`now()` })
-      .where(eq(sessions.id, sessionId));
+      .where(eq(sessions.id, sessionId))
+      .returning({ userId: sessions.userId });
+    if (revoked[0]) await this.realtime.closeChannels(revoked[0].userId, [sessionId]);
   }
 
-  /** "Esci da tutti i dispositivi". [Proposta] Chiusura dei canali `realtime`: da fare. */
+  /** "Esci da tutti i dispositivi": revoca tutte le sessioni e chiude tutti i canali (D231). */
   async revokeAll(userId: string): Promise<void> {
-    await this.db
+    const revoked = await this.db
       .update(sessions)
       .set({ revokedAt: sql`now()` })
-      .where(and(eq(sessions.userId, userId), isNull(sessions.revokedAt)));
+      .where(and(eq(sessions.userId, userId), isNull(sessions.revokedAt)))
+      .returning({ id: sessions.id });
+    await this.realtime.closeChannels(
+      userId,
+      revoked.map((row) => row.id),
+      { all: true },
+    );
   }
 
   private async tokensFor(

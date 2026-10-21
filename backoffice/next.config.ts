@@ -21,7 +21,15 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // Nessun file di istruzioni per strumenti esterni generato da next dev nel repository.
   agentRules: false,
+  // Nessun indicatore di sviluppo sopra la barra laterale (copriva "Esci" anche nelle prove e2e).
+  devIndicators: false,
+  // Radice del backoffice: nel repository del backend ci sono due package-lock.json (D116).
+  turbopack: { root: process.cwd() },
   reactStrictMode: true,
+  experimental: {
+    // Copertine degli offsite fino a 5 MB caricate con il modulo (azione lato server).
+    serverActions: { bodySizeLimit: '6mb' },
+  },
   async headers() {
     return [{ source: '/:path*', headers: securityHeaders }];
   },

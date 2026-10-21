@@ -17,8 +17,16 @@ const config = (role: 'app' | 'admin'): AppConfig =>
     JWT_ADMIN_SIGNING_KEY: PLACEHOLDER,
     HMAC_SECRET: PLACEHOLDER,
     TOKEN_ENCRYPTION_KEY: PLACEHOLDER,
-    TOTP_ENCRYPTION_KEY: PLACEHOLDER,
+    // Il client S3 si crea senza collegarsi: servono solo credenziali non vuote
+    S3_ACCESS_KEY_ID: 'openapi',
+    S3_SECRET_ACCESS_KEY: 'openapi',
+    // Nessuna connessione: i client Redis si collegano solo al primo comando
+    REDIS_URL: 'redis://localhost:1',
+    CF_ACCESS_DISABLED: 'true',
   });
+
+// Chiave principale fittizia solo per costruire i moduli: la generazione non cifra nulla
+process.env.MESSAGE_MASTER_KEY ??= PLACEHOLDER;
 
 const OUTPUT = join(__dirname, '..', '..', 'openapi');
 

@@ -13,3 +13,4 @@ backoffice/
 
 # Specifica tecnica scritta a mano, con le sue tabelle
 README.md
+src/domain/notifications/push-texts.ts

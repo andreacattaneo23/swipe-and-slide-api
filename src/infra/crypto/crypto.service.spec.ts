@@ -8,7 +8,6 @@ const config = loadConfig({
   JWT_ADMIN_SIGNING_KEY: secret,
   HMAC_SECRET: secret,
   TOKEN_ENCRYPTION_KEY: secret,
-  TOTP_ENCRYPTION_KEY: `${secret}t`,
 });
 const crypto = new CryptoService(config);
 
@@ -27,13 +26,11 @@ describe('CryptoService', () => {
     for (let i = 0; i < 50; i++) expect(crypto.otpCode()).toMatch(/^\d{6}$/);
   });
 
-  it('cifratura dei token e dei segreti TOTP con chiavi separate', () => {
+  it('cifratura dei token dei fornitori', () => {
     const { ciphertext } = crypto.encryptToken('refresh-token-del-fornitore');
     expect(ciphertext).not.toContain('refresh');
     expect(crypto.decryptToken(ciphertext)).toBe('refresh-token-del-fornitore');
-    const totp = crypto.encryptTotpSecret('JBSWY3DPEHPK3PXP');
-    expect(() => crypto.decryptToken(totp)).toThrow();
-    expect(crypto.decryptTotpSecret(totp)).toBe('JBSWY3DPEHPK3PXP');
+    expect(crypto.encryptToken('refresh-token-del-fornitore').ciphertext).not.toBe(ciphertext);
   });
 
   it('impronta SHA-256 del nonce per Apple', () => {

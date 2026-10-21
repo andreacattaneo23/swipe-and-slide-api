@@ -1,14 +1,16 @@
 'use server';
 
 /**
- * Gestori lato server dell'accesso dell'operatore (D88, D231): email, codice all'email, TOTP.
+ * Gestori lato server dell'accesso dell'operatore (D88, D231, D238): email, poi codice all'email
+ * ricevuto, senza secondo fattore (D244).
  * Il browser parla solo con il server Next; il token della sessione resta nel cookie cifrato.
  */
 import { redirect } from 'next/navigation';
 import type { FormState } from '@/lib/form-state';
 import { homeFor } from '@/lib/roles';
 import { t } from '@/texts';
-import { getAdminApi } from '@/server/admin-api';
+import { maskEmail } from '@/lib/mask-email';
+import { AdminApiError, getAdminApi } from '@/server/admin-api';
 import { errorState } from '@/server/form-errors';
 import {
   clearSession,
@@ -28,8 +30,10 @@ function normalizeCode(value: FormDataEntryValue | null): string {
 }
 
 export async function requestCode(_prev: FormState, formData: FormData): Promise<FormState> {
-  const email = String(formData.get('email') ?? '').trim();
-  if (!EMAIL_PATTERN.test(email)) {
+  const email = String(formData.get('email') ?? '')
+    .trim()
+    .toLowerCase();
+  if (!EMAIL_PATTERN.test(email) || email.length > 254) {
     return {
       status: 'error',
       fieldErrors: { email: t('backoffice.error.required') },
@@ -37,50 +41,32 @@ export async function requestCode(_prev: FormState, formData: FormData): Promise
     };
   }
   try {
-    const challenge = await getAdminApi().requestSignInCode(email);
-    await saveSignInFlow({
-      challengeId: challenge.challengeId,
-      maskedEmail: challenge.maskedEmail,
-      step: 'code',
-    });
+    await getAdminApi().requestSignInCode(email);
+    await saveSignInFlow({ email, maskedEmail: maskEmail(email) });
   } catch (error) {
     return errorState(error, { email });
   }
   redirect('/login');
 }
 
-export async function verifyCode(_prev: FormState, formData: FormData): Promise<FormState> {
+/** Verifica del codice all'email, come `POST /backoffice/auth/verify` (D244). */
+export async function verifySignIn(_prev: FormState, formData: FormData): Promise<FormState> {
   const flow = await readSignInFlow();
-  if (!flow || flow.step !== 'code')
-    return { status: 'error', message: t('backoffice.signIn.expired') };
+  if (!flow) return { status: 'error', message: t('backoffice.signIn.expired') };
   const code = normalizeCode(formData.get('code'));
   if (!CODE_PATTERN.test(code)) {
     return { status: 'error', fieldErrors: { code: t('backoffice.error.code') } };
   }
-  try {
-    const challenge = await getAdminApi().verifySignInCode(flow.challengeId, code);
-    await saveSignInFlow({ ...flow, challengeId: challenge.challengeId, step: 'totp' });
-  } catch (error) {
-    return errorState(error);
-  }
-  redirect('/login');
-}
-
-export async function verifyTotp(_prev: FormState, formData: FormData): Promise<FormState> {
-  const flow = await readSignInFlow();
-  if (!flow || flow.step !== 'totp')
-    return { status: 'error', message: t('backoffice.signIn.expired') };
-  const totpCode = normalizeCode(formData.get('totpCode'));
-  if (!CODE_PATTERN.test(totpCode)) {
-    return { status: 'error', fieldErrors: { totpCode: t('backoffice.error.code') } };
-  }
   let home: string;
   try {
-    const session = await getAdminApi().verifyTotp(flow.challengeId, totpCode);
+    const api = getAdminApi();
+    const session = await api.verifySignIn(flow.email, code);
+    const operator = await api.getCurrentOperator(session.token);
     await saveSession({ token: session.token, expiresAt: session.expiresAt });
     await clearSignInFlow();
-    home = homeFor(session.operator.roles);
+    home = homeFor(operator.roles);
   } catch (error) {
+    if (error instanceof AdminApiError && error.code === 'code_expired') await clearSignInFlow();
     return errorState(error);
   }
   redirect(home);

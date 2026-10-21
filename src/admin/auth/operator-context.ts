@@ -7,7 +7,6 @@ export interface OperatorContext {
   operatorId: string;
   sessionId: string;
   roles: OperatorRole[];
-  lastTotpAt: Date;
 }
 
 export interface OperatorRequest extends Request {

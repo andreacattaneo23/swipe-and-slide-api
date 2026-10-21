@@ -16,6 +16,7 @@ import { CompaniesService } from '../../domain/companies/companies.service';
 import { isDisposable, isPersonalProvider, normalizeEmail } from '../../domain/email/email-address';
 import { OtpService } from '../../domain/otp/otp.service';
 import { PersonalIdentitiesService, REGISTRATION_DAYS } from '../auth/personal-identities.service';
+import { WordFilterService } from '../../domain/safety/word-filter.service';
 import { SessionsService } from '../auth/sessions.service';
 import {
   BirthDateDto,
@@ -64,6 +65,7 @@ export class RegistrationService {
     private readonly coreRule: CoreRuleService,
     private readonly approvals: ApprovalsService,
     private readonly sessions: SessionsService,
+    private readonly words: WordFilterService,
   ) {}
 
   async state(userId: string): Promise<RegistrationStateDto> {
@@ -169,6 +171,10 @@ export class RegistrationService {
       .from(cities)
       .where(and(eq(cities.id, body.homeCityId), eq(cities.isActive, true)));
     if (!city) throw ApiError.badRequest('registration.city.invalid');
+    // Filtro delle parole anche sul nome in registrazione (D73)
+    for (const text of [body.firstName, body.lastName]) {
+      if (!(await this.words.isAllowed(text))) throw new ApiError(422, 'profile.text.rejected');
+    }
     // Preferenze di base: età dell'utente meno 5 e più 5, mai sotto 18 (D51, D197)
     await this.db
       .update(profiles)

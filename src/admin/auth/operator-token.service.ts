@@ -6,8 +6,8 @@ const ISSUER = 'swipe-and-slide';
 const AUDIENCE = 'admin-api';
 
 /**
- * Token della sessione dell'operatore emesso da `admin-api` dopo OTP e TOTP: JWT con
- * destinatario `admin-api`, `operator_id`, sessione e ora dell'ultimo TOTP (D231). Chiave e
+ * Token della sessione dell'operatore emesso da `admin-api` dopo il codice all'email (D244): JWT
+ * con destinatario `admin-api`, `operator_id` e sessione (D231). Chiave e
  * destinatario diversi da quelli dell'app: i due token non valgono sull'altra API.
  */
 @Injectable()
@@ -18,8 +18,8 @@ export class OperatorTokenService {
     this.key = new TextEncoder().encode(config.jwtAdminSigningKey);
   }
 
-  sign(operatorId: string, sessionId: string, lastTotpAt: Date, expiresAt: Date): Promise<string> {
-    return new SignJWT({ sid: sessionId, totp_at: Math.floor(lastTotpAt.getTime() / 1000) })
+  sign(operatorId: string, sessionId: string, expiresAt: Date): Promise<string> {
+    return new SignJWT({ sid: sessionId })
       .setProtectedHeader({ alg: 'HS256', typ: 'JWT' })
       .setSubject(operatorId)
       .setIssuer(ISSUER)

@@ -148,7 +148,7 @@ jobs:
 
       - name: Report di Playwright
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report
           path: backoffice/playwright-report/

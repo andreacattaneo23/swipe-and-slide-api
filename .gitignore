@@ -1,14 +1,20 @@
 # Le cartelle generate sono ancorate con "/" alla radice: senza, la regola varrebbe in ogni
-# sottocartella e potrebbe nascondere codice vero (es. una pagina app/audit/logs/ del backoffice).
-# Le regole proprie del backoffice stanno in backoffice/.gitignore.
+# sottocartella e potrebbe nascondere codice vero (es. una cartella src/app/coverage/).
 
-# Dipendenze (in ogni cartella: anche backoffice/node_modules)
+# Dipendenze
 node_modules/
 
 # Build e risultati dei test del backend
 /dist/
 /coverage/
 *.tsbuildinfo
+
+# Artefatti di Playwright e degli strumenti di test (D245)
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
 
 # Variabili d'ambiente e segreti: solo .env.example entra nel repository
 .env

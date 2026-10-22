@@ -12,8 +12,6 @@ const common = {
   },
   transformIgnorePatterns: ['/node_modules/(?!(jose|@scure|@noble|expo-server-sdk)/)'],
   moduleFileExtensions: ['ts', 'js', 'json'],
-  // Il backoffice ha i suoi test (Vitest, Playwright) e la sua build
-  modulePathIgnorePatterns: ['<rootDir>/backoffice/'],
 };
 
 module.exports = {

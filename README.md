@@ -1,8 +1,20 @@
-# Swipe & Slide — Backend
+# Swipe & Slide — API
 
-Specifica tecnica di riferimento del backend: architettura, tecnologie, sicurezza, prestazioni e
-regole di sviluppo. Il repository contiene l'API NestJS, il servizio del tempo reale, i processi
-pianificati e il backoffice Next.js.
+Specifica tecnica di riferimento del livello API: architettura, tecnologie, sicurezza, prestazioni
+e regole di sviluppo. Il repository `swipe-and-slide-api` contiene l'API NestJS (`app-api` e
+`admin-api`), il servizio del tempo reale (`realtime`), i processi pianificati (`jobs`), il
+database con le migrazioni e i contratti OpenAPI (`openapi/app.json`, `openapi/admin.json`).
+
+Il backoffice Next.js ha un repository a sé, `swipe-and-slide-backend` (D245, rivede D116): legge
+il contratto da `../swipe-and-slide-api/openapi/admin.json`, come l'app legge
+`../swipe-and-slide-api/openapi/app.json`. I tre repository stanno nella stessa cartella:
+
+```
+SS/
+├── swipe-and-slide-api/        questo repository (livello API)
+├── swipe-and-slide-backend/    backoffice Next.js
+└── swipe-and-slide-frontend/   app Expo
+```
 
 Legenda:
 - **(Dnn)**: decisione già presa sul progetto, non si cambia senza una nuova decisione;
@@ -60,7 +72,7 @@ Principi trasversali: **nel dubbio si nasconde** (fail closed); **nessuno scopre
 ## 2. Architettura e servizi
 
 Un solo codice NestJS e **una sola immagine Docker** per API, tempo reale e processi; il backoffice
-ha la sua immagine, costruita dalla cartella `backoffice/` dello stesso repository (D116).
+ha la sua immagine, costruita dal suo repository `swipe-and-slide-backend` (D245).
 Servizi, selezione dei moduli e struttura delle cartelle sono decisi con D231.
 
 | Servizio (Cloud Run) | Accesso | Moduli caricati | Note |
@@ -69,7 +81,7 @@ Servizi, selezione dei moduli e struttura delle cartelle sono decisi con D231.
 | `admin-api` | Privato (IAM), invocabile solo dall'account di servizio del backoffice | Moduli di amministrazione (`src/admin/`) e il nucleo | Ruolo del database `backoffice_role` (D90) |
 | `realtime` | Pubblico (`wss://`) | Gateway WebSocket (`src/realtime/`) | Da 0 a 3 istanze, 1 vCPU, 512 MiB (D182) |
 | `daily-jobs`, `hourly-jobs` | Cloud Run job da Cloud Scheduler | Processi pianificati (`src/jobs/`) | `node dist/jobs.js daily` / `hourly` |
-| `backoffice` | Privato (IAM o IAP) | Next.js, intermediario lato server (BFF) | Chiama solo `admin-api` con il client generato; **non tocca mai il database** (D92) |
+| `backoffice` (repository `swipe-and-slide-backend`, D245) | Privato (IAM o IAP) | Next.js, intermediario lato server (BFF) | Chiama solo `admin-api` secondo `openapi/admin.json`; **non tocca mai il database** (D92) |
 
 ```mermaid
 flowchart LR
@@ -104,7 +116,7 @@ alcuna rotta `/backoffice/*`.
 **Struttura delle cartelle** (D231):
 
 ```
-swipe-and-slide-backend/
+swipe-and-slide-api/
 ├── src/
 │   ├── core/            regola core: CoreRuleModule e CoreRuleService (canSee, canInteract,
 │   │                    canWrite, setOpenSpace, realign), VisibilityGuard, @ExposesUser,
@@ -127,13 +139,14 @@ swipe-and-slide-backend/
 ├── test/
 │   ├── core-rule/       suite RC su PostgreSQL reale, mai in regressione
 │   ├── integration/     API dell'app e di amministrazione con PostgreSQL reale e i ruoli
+│   ├── e2e/             accesso degli operatori sul sistema vero, con il codice letto da Mailpit
 │   └── support/         database di prova, dati di prova, fornitori d'identità di prova
-├── backoffice/          applicazione Next.js (BFF), con il suo package.json e Dockerfile
+├── scripts/             dev-stack, programmatore dei processi, testi delle push, carico del
+│                        tempo reale
 └── .github/             workflow della CI (check.yml, pr-title.yml), Dependabot
 ```
 
-Cartelle previste e non ancora create: `src/jobs/` (comandi dei processi), `test/e2e/` e
-`docker/` (Dockerfile dell'API per Cloud Run; in locale niente Docker, D237).
+Cartelle previste e non ancora create: `docker/` (Dockerfile dell'API per Cloud Run; in locale niente Docker, D237).
 
 Moduli principali (nomi del glossario): `AuthModule`, `RegistrationModule`, `ConsentsModule`,
 `WorkIdentityModule`, `ExcludedCompaniesModule`, `CompaniesModule`, `CoreRuleModule`,
@@ -538,8 +551,21 @@ npm run dev:stack
 
 `dev:stack` crea `.env` con segreti casuali se manca (credenziali di sviluppo di MinIO
 `minioadmin` solo lì), compila, applica le migrazioni, crea il bucket, esegue il seed se il
-database è vuoto e avvia con `concurrently` la compilazione continua e i servizi. Con le porte
-già occupate: `APP_PORT`, `ADMIN_PORT`, `REALTIME_PORT`, `BACKOFFICE_PORT`.
+database è vuoto e avvia con `concurrently` la compilazione continua, `app-api`, `admin-api`,
+`realtime` e `jobs`. Il **backoffice** parte **solo se** c'è il suo repository accanto a questo
+(`../swipe-and-slide-backend`, D245; `BACKOFFICE_DIR` per un'altra cartella, per esempio un
+worktree): installa le sue dipendenze se mancano e lo avvia con `ADMIN_API_URL` puntato ad
+`admin-api`; altrimenti lo salta con un messaggio. Con le porte già occupate: `APP_PORT`,
+`ADMIN_PORT`, `REALTIME_PORT`, `BACKOFFICE_PORT`.
+
+```sh
+# tutto, con il backoffice clonato accanto
+git clone github-giandog17:andreacattaneo23/swipe-and-slide-backend.git ../swipe-and-slide-backend
+npm run dev:stack
+# porte alternative e backoffice da un'altra cartella
+APP_PORT=3200 ADMIN_PORT=3201 REALTIME_PORT=3202 BACKOFFICE_PORT=3310 \
+  BACKOFFICE_DIR=../wt-backoffice npm run dev:stack
+```
 
 | Servizio | Indirizzo |
 |----------|-----------|
@@ -547,7 +573,7 @@ già occupate: `APP_PORT`, `ADMIN_PORT`, `REALTIME_PORT`, `BACKOFFICE_PORT`.
 | `admin-api` (`backoffice_role`) | `http://localhost:3001` |
 | `realtime` (WebSocket) | `ws://localhost:3002/ws` |
 | Processi pianificati (`jobs_role`) | `hourly` all'avvio e a ogni ora piena, `daily` alle 3 |
-| Backoffice | `http://localhost:3100` |
+| Backoffice (se c'è `../swipe-and-slide-backend`) | `http://localhost:3100` |
 | Mailpit (codici OTP e email) | `http://localhost:8025` |
 | MinIO (console) | `http://127.0.0.1:9101` |
 | App web (export di Expo, CORS di sviluppo) | `http://localhost:8081`, `:8082`, `:8090` (`CORS_DEV_ORIGINS`) |
@@ -564,15 +590,16 @@ già occupate: `APP_PORT`, `ADMIN_PORT`, `REALTIME_PORT`, `BACKOFFICE_PORT`.
   su Mailpit;
 - account dimostrativo `revisore@personale.example` (codice di revisione dal backoffice, D42).
 
-**Prove end to end**: con lo stack avviato, `npm run test:e2e` (backend con Mailpit) e, nel
-backoffice, `ADMIN_API_URL=http://localhost:3001 E2E_PORT=3100 npm run test:e2e` (Playwright contro admin-api vera; con il backoffice già avviato dallo stack
-si riusa quello).
+**Prove end to end**: `npm run test:e2e` (accesso degli operatori con Mailpit) e, nel repository
+del backoffice, `ADMIN_API_URL=http://localhost:3001 npm run test:e2e` (Playwright contro
+`admin-api` di questo repository avviata dallo stack; con `E2E_PORT=3100` si riusa il backoffice
+già avviato dallo stack).
 
 ### Comandi
 
 | Script | Cosa fa |
 |--------|---------|
-| `npm run dev:stack` | Avvio locale completo: migrazioni, bucket, seed se vuoto, tutti i servizi e il backoffice |
+| `npm run dev:stack` | Avvio locale completo: migrazioni, bucket, seed se vuoto, `app-api`, `admin-api`, `realtime`, `jobs` e, se c'è il suo repository accanto, il backoffice |
 | `npm run start:dev` (`npm run dev`) | Compilazione continua e riavvio dell'API (`SERVICE_ROLE` a scelta) |
 | `npm run build` | Compilazione TypeScript in `dist/` |
 | `npm run start` | Avvio della build (`node dist/main.js`) |
@@ -580,7 +607,7 @@ si riusa quello).
 | `npm run format` / `format:check` | Prettier |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run test` | Test di unità |
-| `npm run test:core-rule` | Suite della regola core (RC) su PostgreSQL reale (`swipe_slide_test`) |
+| `npm run test:core-rule` | Suite della regola core (RC) su PostgreSQL reale (`TEST_DATABASE_URL`, di base `swipe_slide_test`) |
 | `npm run test:integration` | API dell'app e di amministrazione con PostgreSQL, Redis, MinIO e Mailpit veri e i ruoli del database |
 | `npm run test:e2e` | Accesso degli operatori con il codice letto da Mailpit |
 | `npm run check` | `lint`, `format:check`, `typecheck`, `test` |
@@ -592,7 +619,10 @@ si riusa quello).
 | `npm run texts:push` / `texts:push:check` | Testi delle push generati da `testi.js` |
 
 Le suite con il database usano `TEST_DATABASE_URL` (di base `postgres:///swipe_slide_test?host=/tmp`),
-ricreano lo schema all'avvio e girano in sequenza (`--runInBand`).
+ricreano lo schema all'avvio e girano in sequenza (`--runInBand`). Per non toccare il database di
+prova di un'altra copia di lavoro se ne usa uno proprio, per esempio
+`createdb -h /tmp swipe_slide_api_test` e
+`TEST_DATABASE_URL=postgres:///swipe_slide_api_test?host=/tmp TEST_S3_BUCKET=swipe-slide-api-test`.
 
 ### Variabili d'ambiente
 
@@ -612,7 +642,7 @@ vengono da Secret Manager.
 | Cifratura dei messaggi | `KEY_CUSTODY` (`env` in locale, `openbao` in produzione), `MESSAGE_MASTER_KEY`, `OPENBAO_ADDR`, `OPENBAO_TOKEN`, `OPENBAO_TRANSIT_KEY` |
 | Archivio (S3: MinIO in locale, R2 in produzione) | `S3_ENDPOINT`, `S3_REGION`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `S3_BUCKET`, `S3_FORCE_PATH_STYLE` |
 | Email | `EMAIL_TRANSPORT` (`smtp`: Mailpit in locale, Brevo in produzione; `brevo` per l'API), `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, `BREVO_API_KEY`, `BREVO_WEBHOOK_SECRET`, `EMAIL_FROM_NEUTRAL`, `EMAIL_FROM_PROJECT`, `TEAM_ALERT_EMAIL`, `APPEAL_URL` |
-| Sviluppo e test | `TEST_DATABASE_URL`, `TEST_REDIS_URL`, `TEST_S3_BUCKET`, `APP_PORT`, `ADMIN_PORT`, `REALTIME_PORT`, `BACKOFFICE_PORT` |
+| Sviluppo e test | `TEST_DATABASE_URL`, `TEST_REDIS_URL`, `TEST_S3_BUCKET`, `MAILPIT_API`, `APP_PORT`, `ADMIN_PORT`, `REALTIME_PORT`, `BACKOFFICE_PORT`, `BACKOFFICE_DIR` (repository del backoffice per `dev:stack`, D245) |
 | Push e tempo reale | `EXPO_ACCESS_TOKEN`, `REALTIME_INSTANCE_ID` |
 | HTTP | `CORS_ALLOWED_ORIGINS` (solo `/web-deletion/*`), `CORS_DEV_ORIGINS` (app web, solo fuori dalla produzione) |
 | Osservabilità | `OTEL_SERVICE_NAME`, `OTEL_EXPORTER_OTLP_ENDPOINT` |
@@ -635,14 +665,14 @@ vengono da Secret Manager.
 - Altre suite obbligatorie: tempo reale (eventi minimi, nessun evento a chi non si vede, push solo
   senza canale connesso), lettura delle chat (D181, D183, D187), approvazione (D141–D144), Agenda,
   Offsite, permessi di `backoffice_role`.
-- Il backoffice rispetta WCAG 2.2 AA (D198).
+- Il backoffice, nel suo repository, rispetta WCAG 2.2 AA (D198).
 
 ### Integrazione continua (D231)
 
 GitHub Actions su ogni PR (`.github/workflows/check.yml` e `pr-title.yml`): commitlint sul
 titolo, `npm ci`, `lint` (con i confini tra `app` e `admin`), `format:check`, `typecheck`,
-`build`, test di unità, suite RC e integrazione con PostgreSQL 17, Redis, MinIO e Mailpit come
-servizi, `openapi:check`,
+`build`, test di unità, suite RC, integrazione ed end to end con PostgreSQL 17, Redis, MinIO e
+Mailpit come servizi, `openapi:check`,
 `npm audit --audit-level=high`; la build delle immagini Docker arriverà con il deploy. L'esito
 verde è la condizione per chiedere il merge.
 
@@ -673,7 +703,7 @@ Stime della beta, da verificare al deploy (i piani gratuiti cambiano).
 
 | Servizio | Uso | Costo stimato in beta |
 |----------|-----|-----------------------|
-| Cloud Run `app-api`, `admin-api`, `backoffice` | Scalano a zero | 0 € (quota gratuita) |
+| Cloud Run `app-api`, `admin-api`, `backoffice` (dal suo repository) | Scalano a zero | 0 € (quota gratuita) |
 | Cloud Run `realtime` + Upstash Redis | Non scala a zero con utenti connessi; Redis anche per la cache L2 (D229) | Pochi euro al mese; circa 40–60 $/mese a regime; Redis 0 € nel piano gratuito (budget di comandi da controllare con la cache) |
 | Cloud Run job + Cloud Scheduler | Un processo giornaliero e uno orario | 0 € |
 | Neon PostgreSQL | Piano gratuito (0,5 GB, 100 ore di calcolo) | 0 € in beta (D207); dopo la beta circa 10–20 $/mese |
@@ -706,6 +736,7 @@ e del controllo delle foto; dopo la beta Neon a consumo e il tempo reale a regim
 | Profilo, foto su S3, tassonomie, trasferte, Open space, aziende escluse, blocchi, cambio azienda, ri-verifica, account, esportazione con i messaggi decifrati (B1) | Presente |
 | Feed, swipe, match, chat cifrata, inviti, Agenda, offsite, notifiche push, servizio `realtime` (B2) | Presente |
 | Sicurezza, moderazione, approvazioni e amministrazione completa (B3) | Presente |
-| Backoffice `backoffice/` allineato a `openapi/admin.json`, Playwright contro admin-api vera | Presente |
+| Backoffice | Nel repository `swipe-and-slide-backend` (D245), allineato a `openapi/admin.json` |
+| Repository separati per API e backoffice (D245) | Presente |
 | Avvio locale completo (`npm run dev:stack`) | Presente |
 | Infrastruttura di produzione (Hetzner, D241–D242) | Fuori da questa fase |

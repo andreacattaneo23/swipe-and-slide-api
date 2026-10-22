@@ -1,8 +1,8 @@
 {
-  "name": "swipe-and-slide-backend",
+  "name": "swipe-and-slide-api",
   "version": "0.0.0",
   "private": true,
-  "description": "API NestJS di Swipe & Slide: regola core, accesso, registrazione e amministrazione",
+  "description": "Livello API di Swipe & Slide (NestJS): app-api, admin-api, realtime, jobs, database e contratti OpenAPI",
   "engines": {
     "node": ">=24"
   },

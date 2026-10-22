@@ -1,6 +1,7 @@
-# Controlli del backend su ogni PR verso main e su ogni push su main (D231): lint con i confini
-# tra app e admin, formato, tipi, build, test di unità, suite della regola core e integrazione
-# su PostgreSQL reale, contratti OpenAPI aggiornati e npm audit. PostgreSQL, Redis, MinIO e
+# Controlli del livello API (D231, D245) su ogni PR verso main e su ogni push su main: lint con i
+# confini tra app e admin, formato, tipi, build, test di unità, suite della regola core,
+# integrazione ed end to end su PostgreSQL reale, contratti OpenAPI aggiornati e npm audit. Il
+# backoffice ha il suo repository (swipe-and-slide-backend) e la sua CI. PostgreSQL, Redis, MinIO e
 # Mailpit sono servizi di GitHub Actions (in locale niente Docker, D237). Nessun segreto necessario.
 name: Verifica
 
@@ -101,6 +102,9 @@ jobs:
 
       - name: Test di integrazione
         run: npm run test:integration
+
+      - name: Prove end to end (accesso degli operatori con il codice letto da Mailpit)
+        run: npm run test:e2e
 
       - name: Contratti OpenAPI aggiornati
         run: npm run openapi:check

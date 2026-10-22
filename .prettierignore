@@ -8,9 +8,6 @@ package-lock.json
 # Contratti OpenAPI generati da `npm run openapi`: non si modificano a mano
 openapi/
 
-# Backoffice Next.js: ha i suoi strumenti (D116)
-backoffice/
-
 # Specifica tecnica scritta a mano, con le sue tabelle
 README.md
 src/domain/notifications/push-texts.ts

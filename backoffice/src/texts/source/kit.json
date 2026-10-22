@@ -1,7 +1,0 @@
-{
-  "description": "Copia dei testi: origine relativa alla cartella docs/ della radice.",
-  "source": "design/sorgente/mockup/testi.js",
-  "copy": "src/texts/source/texts.js",
-  "sha256": "aa81c0cec6d8f5c28ea8f6e7503c1cbec8853c2832eacc13365b2447cb78cf59",
-  "keys": 112
-}

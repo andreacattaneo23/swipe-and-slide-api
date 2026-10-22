@@ -21,15 +21,7 @@ const forbid = (folders, message) => ({
 
 export default tseslint.config(
   {
-    ignores: [
-      'node_modules/',
-      'dist/',
-      'coverage/',
-      'openapi/',
-      'backoffice/',
-      '**/*.js',
-      '**/*.mjs',
-    ],
+    ignores: ['node_modules/', 'dist/', 'coverage/', 'openapi/', '**/*.js', '**/*.mjs'],
   },
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
